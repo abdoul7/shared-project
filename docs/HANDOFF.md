@@ -6,6 +6,15 @@ Stillroom is an original Windows-first private desktop communication application
 
 ## CURRENT — continuation on 2026-10-18 (America/Toronto)
 
+### Second-PC validation of 093b439 — 2026-10-19
+
+This section supersedes the line below that says the latest source was not rerun or rebuilt. On a different physical PC (AMD Ryzen 7 8700F, Windows 10.0.26300, Node 24.21.0, Electron 44.9.0), Git was installed via winget and the branch was fast-forwarded from 4dfa6c3 to 093b439 without a merge or force.
+
+- Passed: `npm ci` (0 vulnerabilities), `npm run check` (29 files), `npm test` (39 passed, 0 failed, 1 opt-in skipped, about 12.4s), `npm run smoke:desktop`, `npm run test:desktop-pair`, strict `npm run test:features`, `npm run build`, packaged `Stillroom.exe --smoke-ui` in a fresh profile, and `node scripts/features-pair.mjs --packaged`. The strict feature runs used own-window native sharing (receiver 1104x740), a synthetic microphone, an exact 196608-byte file over 14 direct / 0 relay frames, hangup, report export and system-trust reset. Receipt: verification/checkpoint-093b439-validation.json.
+- Pitfall: stale packaged Stillroom.exe instances from an earlier session locked `dist`, so the first build failed EBUSY. A packaged run against that stale build timed out; it is invalid and not a regression. Check for running `dist` executables before building.
+- Local only: older uncommitted WIP (Docker Compose relay deploy draft, v0.2.0 bump, file data-channel `priority:'very-low'`) sits in `git stash@{0}` on this PC. It is unpushed and unverified, and is not part of the checkpoint.
+- Not run: rtc/native/duplex fps probes, the 2GiB benchmark, two physical PCs, real microphones/system audio, TURN. The duplex 1440p60 goal is still unmet. This PC has no Cloudflare tunnel runtime file; the tunnel ran on the other PC.
+
 ### Latest source checkpoint — user requested immediate push (2026-10-18)
 
 The user explicitly requested stopping tests and pushing the latest source so their friend can continue. No further tests or rebuild were run after that request. The owned duplex probe had already ended when its process was checked; no matching live probe process remained.

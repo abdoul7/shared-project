@@ -1,0 +1,25 @@
+{
+  "date": "2026-10-19",
+  "sourceCommit": "093b439b30b78bca5989e249ea82396bb99f6a8d",
+  "purpose": "First full validation and rebuild of the latest lifecycle source (cancellable microphone preparation, late-offer guards, media status) after the previous contributor stopped testing before pushing.",
+  "host": { "os": "Windows 10.0.26300 x64", "cpu": "AMD Ryzen 7 8700F", "node": "24.21.0", "electron": "44.9.0", "note": "Different physical PC from the 9800X3D used for earlier streaming receipts. All runs are same-host." },
+  "checks": [
+    { "command": "npm ci", "result": "pass", "detail": "54 packages, 0 vulnerabilities" },
+    { "command": "npm run check", "result": "pass", "detail": "29 JavaScript files" },
+    { "command": "npm test", "result": "pass", "detail": "40 tests: 39 passed, 0 failed, 1 opt-in large benchmark skipped, about 12.4s" },
+    { "command": "npm run smoke:desktop", "result": "pass", "detail": "exit 0" },
+    { "command": "npm run test:desktop-pair", "result": "pass", "detail": "two independent Electron processes; each history 2, delivered 1, unverified/plaintext rejected, probe plaintext absent from snapshot" },
+    { "command": "npm run test:features", "result": "pass", "detail": "strict: accepted call, mute, own-window native sharing received 1104x740 and stopped, hangup, report export, system-trust reset, 196608-byte exact file, 14 direct / 0 relay frames each side. Synthetic microphone." },
+    { "command": "npm run build", "result": "pass", "detail": "first attempt failed EBUSY: stale packaged Stillroom.exe instances from an earlier session held dist. They were closed with user approval and the rebuild passed.", "appAsarSha256": "9f9484e22c7107719f895e6735e05a4cc18bc9586d0fb3c53bcd1651e18cf4ee" },
+    { "command": "Stillroom.exe --smoke-ui (fresh profile)", "result": "pass", "detail": "exit 0; bridge true, renderer process undefined, sandbox true, contextIsolation true, nodeIntegration false" },
+    { "command": "node scripts/features-pair.mjs --packaged", "result": "pass", "detail": "same strict feature flow as above on the rebuilt executable. An earlier timed-out run used the stale pre-rebuild build and is invalid." }
+  ],
+  "fileSha256": "d6c8d37d7cfa5f5f720c4b7e527fe4b0fce40030c0825f82bbd40a2442fababa",
+  "notRun": [
+    "npm run test:rtc and native 1440p60 forward/reverse/duplex-motion probes",
+    "opt-in 2GiB transfer benchmark",
+    "two physical PCs or cross-network media/file tests",
+    "real microphones or system audio",
+    "TURN (not provisioned)"
+  ]
+}

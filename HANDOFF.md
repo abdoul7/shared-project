@@ -2,9 +2,11 @@
 
 Read this file before making changes. Update it with every push so the next contributor or LLM can continue without the previous chat.
 
-## Current state (updated 2026-10-18, America/Toronto)
+## Current state (updated 2026-10-19)
 
-**Continued from the friend's pushed WIP checkpoint `4dfa6c3`.** Messaging, direct calls/sharing and resumable encrypted files are implemented experimentally; private groups remain absent. This continuation hardens capture cleanup, adds accurate desktop verification gates, and prepares a free hosted relay without a VPN. Read [docs/HANDOFF.md](docs/HANDOFF.md) for the current evidence and next steps. Earlier entries use the previous contributor's timezone.
+**Latest: `093b439` fully validated and rebuilt on a second physical PC.** The lifecycle source that the previous contributor pushed untested now passes the full suite (39 passed, 1 opt-in skipped), two-window messaging, the strict call/sharing/file feature test, Windows build, packaged startup isolation and the packaged strict feature test. Receipt: verification/checkpoint-093b439-validation.json. Streaming fps probes, 2GiB transfer, two-PC/cross-network, real microphones/system audio and TURN were not run. The Cloudflare tunnel described below runs on the other contributor's PC. This PC has no `.local/cloudflare-relay.json`.
+
+**Previous state:** continued from the friend's pushed WIP checkpoint `4dfa6c3`.** Messaging, direct calls/sharing and resumable encrypted files are implemented experimentally; private groups remain absent. This continuation hardens capture cleanup, adds accurate desktop verification gates, and prepares a free hosted relay without a VPN. Read [docs/HANDOFF.md](docs/HANDOFF.md) for the current evidence and next steps. Earlier entries use the previous contributor's timezone.
 
 Latest connection route: Cloudflare Quick Tunnel is running locally and public WSS delivery was verified with two synthetic clients. Read docs/CLOUDFLARE_RELAY.md and local `.local/cloudflare-relay.json` for the current temporary address. Render was blocked by card verification and was not deployed. No VPN is used.
 
@@ -32,6 +34,15 @@ User requested stopping tests and immediately pushing the latest source for thei
 3. Address protocol/key-lifecycle and storage limitations; private groups require a reviewed group-key design. Never automatically merge unrelated main/feature histories.
 
 ## Update history
+
+### 2026-10-19 — Validate 093b439 and rebuild on second PC
+
+- Installed Git for Windows (winget Git.Git 2.55.0.5), because this PC had no git on PATH. Fast-forwarded the local `codex/stillroom-encrypted-dm` from 4dfa6c3 to 093b439 with `--ff-only`. No merge with main, no force.
+- The local checkout had older uncommitted WIP: a Docker Compose relay deploy draft (`deploy/`, `.dockerignore`, `docs/DEPLOYMENT.md`), a v0.2.0 version bump and a `priority:'very-low'` file data channel. It was saved as `git stash@{0}` on this PC only, then left unpushed and unverified. Upstream already had the npm script additions it contained.
+- Validation on AMD Ryzen 7 8700F / Windows 10.0.26300 / Node 24.21.0: npm ci (0 vulnerabilities); check 29 files; npm test 39 passed / 0 failed / 1 skipped; smoke:desktop; test:desktop-pair; strict test:features (own-window sharing, synthetic mic, exact 196608-byte direct file); build; packaged --smoke-ui; packaged strict features-pair. All passed. app.asar SHA-256 is in the receipt.
+- Issue found: the first build failed EBUSY because stale packaged Stillroom.exe processes from an earlier session locked `dist`. A packaged feature run against that stale build timed out and is invalid. After the user approved closing the processes, the rebuild and all packaged checks passed. Before building, check for running dist executables.
+- Not run: test:rtc and native/duplex 1440p60 probes, 2GiB benchmark, two physical PCs, real microphones/system audio, TURN. Duplex 60fps remains unmet (59.64/59.58fps, prior receipt).
+- Next: unchanged. Do the two-PC test (one PC hosts the Cloudflare tunnel per docs/CLOUDFLARE_RELAY.md; both run this source), then media reliability, then the group-key design.
 
 ### 2026-10-18 — Prepare measured streaming build
 
