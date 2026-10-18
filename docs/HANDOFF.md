@@ -92,3 +92,8 @@ Root reference is the supplied local Windows installation only. REA inspected PE
 1. Verify upload of codex/stillroom-encrypted-dm, then clone that branch and npm ci. Do not use main for the implementation. Do not merge histories automatically.
 2. Arrange trusted reachable relay; run/record real two-computer messaging, reconnect and restart tests. Fix failures before claiming cross-computer readiness.
 3. Continue slice B: authenticated peer session setup plus E2EE voice/sharing, then sustained receiver-side 1440p60 measurements. Preserve all file/group/security acceptance criteria in PROJECT_PLAN.md.
+
+
+## 2026-10-19 — WIP extension checkpoint
+
+User requested deeper Root messaging/calls/sharing/transfers analysis and a complete working application. Baseline 40de59b02a13d217272ad28ed1f5cfb134b58253 is clean and pushed. Read-only deeper reference investigation is in progress; no new behavior claims yet. Security extension design records authenticated ephemeral controls, direct WebRTC media/data and encrypted resumable chunk transfer before implementation. Controls are being added and independently tested; media/transfer UI and performance checks remain unfinished. Next: integrate authenticated media and transfer controls, test real local desktop peers, record precise evidence/limits and checkpoint again. Never execute reference account actions or commit proprietary packages.

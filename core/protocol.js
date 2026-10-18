@@ -133,7 +133,7 @@ export function open(e, identity, sender) {
     p.to !== e.to ||
     p.id !== e.id ||
     p.to !== card(identity).id ||
-    !["message", "ack"].includes(p.type)
+    !["message", "ack", "control"].includes(p.type)
   )
     throw Error("Invalid authenticated headers");
   return p;

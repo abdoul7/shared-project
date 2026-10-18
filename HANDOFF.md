@@ -52,3 +52,8 @@ Broad GitHub CLI authorization was blocked by automatic approval review; user de
 ## Format for future updates
 
 Use a dated heading and include: changes and their purpose; relevant files; validation and results; known issues or unfinished work; and concrete next steps. Keep the current-state and next-steps sections synchronized with the latest update.
+
+
+## 2026-10-19 — WIP extension checkpoint
+
+User requested deeper Root messaging/calls/sharing/transfers analysis and a complete working application. Baseline 40de59b02a13d217272ad28ed1f5cfb134b58253 is clean and pushed. Read-only deeper reference investigation is in progress; no new behavior claims yet. Security extension design records authenticated ephemeral controls, direct WebRTC media/data and encrypted resumable chunk transfer before implementation. Controls are being added and independently tested; media/transfer UI and performance checks remain unfinished. Next: integrate authenticated media and transfer controls, test real local desktop peers, record precise evidence/limits and checkpoint again. Never execute reference account actions or commit proprietary packages.

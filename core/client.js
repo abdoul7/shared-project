@@ -45,6 +45,8 @@ export class ChatClient {
     this.reconnectAttempt = 0;
     this.lastError = null;
     this.flushCursor = 0;
+    this.controlListeners = new Set();
+    this.controlSeen = new Map();
   }
   contactCard() {
     return card(this.data.identity);
@@ -62,6 +64,33 @@ export class ChatClient {
   subscribe(fn) {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
+  }
+  subscribeControls(fn) {
+    this.controlListeners.add(fn);
+    return () => this.controlListeners.delete(fn);
+  }
+  sendControl(peerId, namespace, data) {
+    return this.mutate(async () => {
+      const recipient = this.data.contacts.find((c) => c.id === peerId);
+      if (!recipient) throw Error("Verify and add this contact first");
+      if (!this.connected) throw Error("Connect before starting a live session");
+      const payload = {
+        v: 1, from: this.contactCard().id, to: peerId, id: randomUUID(),
+        type: "control", namespace, data, sentAt: Date.now(),
+      };
+      this.validateControl(payload);
+      const envelope = seal(payload, this.data.identity, recipient);
+      if (!this.transmit({ type: "envelope", envelope }))
+        throw Error("Live session transport is busy; retry");
+      return payload.id;
+    });
+  }
+  validateControl(payload) {
+    if (!["rtc", "transfer"].includes(payload.namespace) ||
+      payload.data === null || typeof payload.data !== "object" || Array.isArray(payload.data) ||
+      !Number.isSafeInteger(payload.sentAt) ||
+      Buffer.byteLength(JSON.stringify(payload)) > 32768)
+      throw Error("Invalid live session control");
   }
   emit() {
     for (const fn of this.listeners)
@@ -103,7 +132,8 @@ export class ChatClient {
       this.socket?.readyState === WebSocket.OPEN &&
       this.socket.bufferedAmount < 256 * 1024
     )
-      this.socket.send(JSON.stringify(value));
+      { this.socket.send(JSON.stringify(value)); return true; }
+    return false;
   }
   allowlist() {
     if (!this.connected) return;
@@ -307,6 +337,23 @@ export class ChatClient {
     const sender = this.data.contacts.find((c) => c.id === envelope.from);
     if (!sender) throw Error("Unapproved sender");
     const p = open(envelope, this.data.identity, sender);
+    if (p.type === "control") {
+      this.validateControl(p);
+      const now = Date.now();
+      if (p.sentAt < now - 60000 || p.sentAt > now + 10000) return;
+      for (const [key, expires] of this.controlSeen)
+        if (expires < now) this.controlSeen.delete(key);
+      const key = `${p.from}:${p.id}`;
+      if (this.controlSeen.has(key)) return;
+      // Reject instead of evicting live IDs: eviction could admit a replay.
+      if (this.controlSeen.size >= 10000) throw Error("Live control receive capacity exceeded");
+      this.controlSeen.set(key, p.sentAt + 60000);
+      for (const fn of this.controlListeners)
+        try {
+          Promise.resolve(fn(structuredClone({ from: p.from, namespace: p.namespace, data: p.data, id: p.id }))).catch(() => {});
+        } catch {}
+      return;
+    }
     if (p.type === "ack") {
       const pending = this.data.outbox.find(
         (x) => x.id === p.ackId && x.peerId === p.from,
