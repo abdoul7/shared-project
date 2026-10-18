@@ -1,4 +1,5 @@
 import https from "node:https";
+import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { randomBytes } from "node:crypto";
@@ -17,15 +18,21 @@ export async function createRelay({
   host = "127.0.0.1",
   port = 0,
   scope,
+  tlsTerminated = false,
 }) {
   await ready;
-  if (!cert || !key) throw Error("TLS certificate and private key required");
+  if (tlsTerminated && (!scope || cert || key))
+    throw Error("TLS proxy mode requires an explicit public WSS scope and no local TLS keys");
+  if (!tlsTerminated && (!cert || !key)) throw Error("TLS certificate and private key required");
   if (scope && new URL(scope).protocol !== "wss:")
     throw Error("WSS scope required");
-  const server = https.createServer({ cert, key }, (_, res) => {
+  const respond = (_, res) => {
     res.writeHead(200);
     res.end("Private relay");
-  });
+  };
+  // Explicit hosted mode only: the managed ingress owns public TLS. Never expose
+  // this internal HTTP listener directly. Desktop clients still require WSS.
+  const server = tlsTerminated ? http.createServer(respond) : https.createServer({ cert, key }, respond);
   const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
   const peers = new Map();
   await new Promise((resolve, reject) => {

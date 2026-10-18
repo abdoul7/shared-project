@@ -1,0 +1,54 @@
+{
+  "independentProductionWindows": true,
+  "relayOnly": false,
+  "sharingRequired": false,
+  "fakeMicrophone": true,
+  "exactFile": true,
+  "testedBytes": 196608,
+  "sourceSha256": "d6c8d37d7cfa5f5f720c4b7e527fe4b0fce40030c0825f82bbd40a2442fababa",
+  "results": [
+    {
+      "exitCode": 0,
+      "role": "a",
+      "success": true,
+      "renderer": true,
+      "callTested": true,
+      "incomingConsent": false,
+      "connected": true,
+      "mute": true,
+      "file": true,
+      "sharing": {
+        "passed": false,
+        "reason": "Screen sharing explicitly skipped by test operator",
+        "skipped": true
+      },
+      "hangup": true,
+      "transferTransport": {
+        "directFrames": 14,
+        "relayFrames": 0
+      }
+    },
+    {
+      "exitCode": 0,
+      "role": "b",
+      "success": true,
+      "renderer": true,
+      "callTested": true,
+      "incomingConsent": true,
+      "connected": true,
+      "mute": true,
+      "file": true,
+      "sharing": {
+        "passed": false,
+        "reason": "Screen sharing explicitly skipped by test operator",
+        "skipped": true
+      },
+      "hangup": true,
+      "transferTransport": {
+        "directFrames": 14,
+        "relayFrames": 0
+      }
+    }
+  ],
+  "success": true
+}

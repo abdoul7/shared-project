@@ -1,6 +1,6 @@
 # Stillroom
 
-An original Windows-first private desktop communication project. **Experimental slice A: encrypted direct text messages.** Voice, screen sharing, file transfers and private groups are not implemented yet. No payment gates or subscriptions. See [project plan](docs/PROJECT_PLAN.md), [security design](docs/SECURITY.md) and [continuation handoff](docs/HANDOFF.md).
+An original Windows-first private desktop communication project. **Experimental encrypted direct messages, peer voice/screen sharing, and resumable file transfers.** Private groups are not implemented. Cross-PC operation, physical audio devices and sustained 1440p60 remain unverified; this is not audited production software. No payment gates or subscriptions. See [project plan](docs/PROJECT_PLAN.md), [security design](docs/SECURITY.md) and [continuation handoff](docs/HANDOFF.md).
 
 ## Windows setup
 
@@ -41,6 +41,10 @@ The shared localhost TLS fixture/key is intentionally public test data, **never 
 
 ## Connecting different computers/networks
 
+For a hosted test relay with no VPN on either PC, see
+[the free hosted-relay instructions](docs/HOSTED_RELAY.md) and `render.yaml`.
+Configuration is prepared; no public service has been created or deployed.
+
 An operator must run the TLS relay on a reachable host with a valid certificate for its DNS name. Obtain a certificate/private key using your normal trusted certificate workflow, keep the key outside Git, allow the chosen inbound TCP port, and configure:
 
 ```powershell
@@ -58,12 +62,30 @@ Only the relay's TLS private key belongs on the server; client identity private 
 
 ## Build and verification
 
+Accept an incoming voice call before sharing a selected screen/window. Mute and
+hangup controls stop local capture; screen sharing has a separate explicit picker
+and stop control. The 1440p60 setting is a requested target; use actual receiver
+statistics to assess quality. File offers require an explicit destination and never
+overwrite an existing file. Partial transfers can be retried; the relay fallback
+does not require an active call. Final publication currently requires filesystem
+hard-link support (for example NTFS); unsupported destinations report an error.
+
 ```powershell
 npm run smoke:desktop
 npm run smoke:ui
 npm run test:desktop-pair
+npm run test:features
+npm run test:features:relay
 npm run build
 ```
+
+`test:features` uses two independent test profiles and synthetic microphone audio;
+it attempts capture only of its own Stillroom test window and fails if sharing
+cannot be verified. In an environment without capture access, explicitly run
+`npm run test:features:no-sharing`; its result marks sharing as skipped and is not
+a screen-sharing pass. `npm run test:rtc` is a 30-second synthetic animated-canvas
+benchmark, not a native desktop or cross-PC test. No command records your personal
+desktop automatically. Test artifacts are in ignored `.local/` paths.
 
 The Windows output is `dist/Stillroom-win32-x64/Stillroom.exe`; distribute the **whole folder**, including dependency license notices. This is an unsigned development build, not an installer or signed automatic updater. Tests use independent clients over real local WSS, but do not establish separate-computer interoperability or security audit status. See handoff for actually executed results, desktop checks and outstanding gates.
 

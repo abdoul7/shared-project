@@ -10,6 +10,7 @@ export async function runFeatureSmoke({ win, getClient, settings }) {
   if (!process.argv.includes('--smoke-features') || !['a', 'b'].includes(role)) throw Error('Feature test flag/role required');
   const peerRole = role === 'a' ? 'b' : 'a';
   const relayOnly = process.env.STILLROOM_TEST_RELAY_ONLY === '1';
+  const skipSharing = process.env.STILLROOM_TEST_SKIP_SHARING === '1';
   const result = { role, success: false, renderer: true, callTested: !relayOnly, incomingConsent: false, connected: false, mute: false, file: false, sharing: { passed: false, reason: 'Not attempted' }, hangup: false };
   const js = code => win.webContents.executeJavaScript(code, true);
   const click = id => js(`document.getElementById(${JSON.stringify(id)}).click()`);
@@ -69,6 +70,7 @@ export async function runFeatureSmoke({ win, getClient, settings }) {
       await wait(async () => { const r = await js(`window.stillroom.call('state')`); return r.value?.transfers?.some(t => t.direction === 'send' && t.status === 'complete' && t.offset === t.total); }, 'file sender completion');
       result.file = true; await marker('file');
       try {
+        if (skipSharing) throw Error('Screen sharing explicitly skipped by test operator');
         await click('shareScreen');
         await wait(() => ui(`document.getElementById('shareDialog').open`), 'capture picker', 3000);
         const source = await js(`[...document.getElementById('shareSource').options].find(o => o.value.startsWith('window:') && /Stillroom/.test(o.textContent))?.value || null`);
@@ -99,12 +101,15 @@ export async function runFeatureSmoke({ win, getClient, settings }) {
         await delay(1500);
         const measured = await js(`document.getElementById('mediaStats').textContent`);
         result.sharing = { passed: true, ...observed, stats: measured };
-      } catch (error) { result.sharing = { passed: false, reason: 'Own-window capture not received: ' + error.message }; }
+      } catch (error) { result.sharing = { passed: false, reason: skipSharing ? 'Screen sharing explicitly skipped by test operator' : 'Own-window capture not received: ' + error.message }; }
       await marker('observed'); await peerMarker('share-finished'); await marker('ready-end');
     }
     await wait(() => ui(`document.getElementById('callPanel').hidden`), 'call ended'); result.hangup = true;
     result.transferTransport = (await js(`window.stillroom.call('state')`)).value?.transferTransport;
     result.success = result.connected && result.mute && result.file && result.hangup && (role === 'a' || result.incomingConsent);
+    // Unavailable capture is not successful screen-sharing verification.
+    result.sharing.skipped = skipSharing;
+    if (!skipSharing && !result.sharing.passed) result.success = false;
     if (role === 'a' && !(result.transferTransport?.directFrames > 0)) result.success = false;
   } catch (error) { result.error = error.message; }
   await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, JSON.stringify(result, null, 2));

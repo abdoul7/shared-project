@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: stillroom-relay
+    runtime: node
+    plan: free
+    branch: codex/stillroom-encrypted-dm
+    autoDeployTrigger: 'off'
+    buildCommand: npm ci --omit=dev --ignore-scripts
+    startCommand: node server/hosted-relay.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: 24.21.0

@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "test": "in-process encrypted transfer with staged no-overwrite publication and SHA-256 verification",
+  "size": 2147483648,
+  "durationMs": 349205,
+  "sampledPeakRssBytes": 105590784,
+  "chunkBytes": 16384,
+  "limitations": [
+    "Not a desktop, network, or relay throughput measurement.",
+    "Memory is sampled, not a proven hard ceiling.",
+    "Finite 2 GiB test does not establish every device/filesystem-supported size."
+  ]
+}

@@ -2,6 +2,10 @@
 
 Status: design precedes protocol implementation. Experimental software, no independent audit. No claim of production readiness or cross-network verification.
 
+Continuation status (2026-10-18 Toronto): direct-call and file-transfer extensions below are now implemented experimentally, not merely proposals. Synthetic/local verification does not establish real-device or cross-network readiness. Local hangup/stop releases capture before signalling/sender completion, and late capture/device requests are rejected if the call changes. See current handoff for actual test outcomes.
+
+Hosted deployment has an explicit separate entry point: `server/hosted-relay.js` expects managed TLS ingress (for example Render). The provider terminates public WSS and forwards HTTP/WebSocket to the internal listener; that listener must never be exposed directly as public plaintext. The provider is trusted for transport termination/routing metadata, not peer content confidentiality. Existing authenticated E2EE envelopes remain unchanged, including their documented lack of forward secrecy. Standard self-hosted relay still requires TLS keys; no certificate failure triggers hosted mode. No public deployment has occurred.
+
 ## Threat model
 
 Protect message contents from network observers and an honest-but-curious or compromised relay. Block impersonation, tampering, unauthorized delivery and duplicate rendering. Endpoints, OS account, Chromium/Electron, and the manually verified contact exchange are trusted. Malware under the same Windows user can defeat DPAPI. Denial of service, traffic analysis, compromised endpoints and malicious contacts are not prevented. A relay can delay/drop messages and observe identities, contact edges, public keys, IP addresses, ciphertext sizes and timing.
@@ -28,7 +32,7 @@ Electron main process owns keys and networking; renderer gets only a minimal val
 
 Use Electron safeStorage with Windows DPAPI for the complete local snapshot (keys, history, queue). Fail closed if OS encryption is unavailable; Linux basic_text is rejected. Never store plaintext fallback data. Write encrypted temporary snapshot then atomic rename; surface storage failures. Memory holds plaintext while unlocked. No cloud recovery: losing the profile/OS credential loses keys and history; a restored identity must reverify contacts as appropriate. Multi-device identity and recovery are not implemented. No message, file, key, auth token or raw exception payload logging.
 
-## Future slices — design constraints, not implemented controls
+## Extension contracts and remaining work
 
 ### Extension design recorded before implementation (2026-10-19)
 
@@ -38,10 +42,10 @@ Calls use one direct peer RTCPeerConnection; SDP (including DTLS fingerprints) a
 
 Files use a separate transfer state machine: bounded encrypted chunks, receiver acceptance and native save selection, backpressure/ACK offsets, resume state protected by OS encryption, authenticated final SHA-256 integrity and exclusive final destination publication. XChaCha20-Poly1305 chunk nonces are random192-bit and bind transfer ID/offset/total. Negotiated transfer keys travel only inside authenticated E2EE offers. Cached partial bytes are encrypted; keys/offsets stay in a separate OS-encrypted transfer snapshot. Direct authenticated WebRTC data channels are preferred; existing E2EE control relay is a slower encrypted fallback. A relay never receives transfer keys or file plaintext. No auto-open or overwrite. Deleting partial data is limited to engine-owned paths. Large-file capacity is constrained by actual filesystem/storage, not subscription or arbitrary product quotas.
 
-These are implementation contracts, not verification claims. Completion, real-device media, cross-network operation and 1440p60 performance must each be established by actual tests. Private groups remain disabled until a reviewed group protocol/membership design is implemented; pairwise primitive selection alone is not a reviewed group protocol.
+These contracts describe the experimental pairwise implementation, not blanket verification claims. Completion, real-device media, cross-network operation and 1440p60 performance must each be established by actual tests. Private groups remain disabled until a reviewed group protocol/membership design is implemented; pairwise primitive selection alone is not a reviewed group protocol.
 
 - Voice/sharing: direct peer WebRTC with DTLS-SRTP; exchange and authenticate session description/fingerprints inside existing E2EE peer envelopes. TURN may relay ciphertext only; SFU use requires additional sender-side E2EE and a reviewed key scheme. Permission and explicit target selection required. Measure receiver 2560x1440/60 performance before claiming success.
-- Files: direct encrypted chunk stream, encrypted relay fallback, bounded buffers/backpressure, authenticated chunk index/transfer ID and final integrity verification. Resume/cancel, safe explicit destination, partial files and storage errors mandatory. No arbitrary file-size quota; no completed transfer or tested size claimed yet.
+- Files: direct encrypted chunk stream, encrypted relay fallback, bounded buffers/backpressure, authenticated chunk index/transfer ID and final integrity verification. Resume/cancel, safe explicit destination, partial files and storage errors mandatory. No arbitrary file-size quota; see the current handoff for actual finite tested sizes. Atomic no-overwrite publication currently requires hard-link support, so unsupported filesystems remain a documented compatibility gap.
 - Groups: adopt reviewed MLS implementation or equivalently reviewed group key protocol before group content. Membership changes rotate epochs; removed members get no future keys. New members receive only post-join history by default. Authorize every message, call and transfer against current epoch. No group API is enabled in slice A.
 - Key rotation: no in-place rotation in slice A; create and reverify a new identity. Add reviewed session-key rotation/ratchet, revocation and migration before production use.
 

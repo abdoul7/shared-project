@@ -2,11 +2,11 @@
 
 Read this file before making changes. Update it with every push so the next contributor or LLM can continue without the previous chat.
 
-## Current state (updated 2026-10-19)
+## Current state (updated 2026-10-18, America/Toronto)
 
-**Stillroom slice A is implemented and locally verified. The feature checkpoint was pushed and verified on GitHub at 6d3673d181c1bad47ed9524cb5e1391ff605a2a0. Subsequent documentation commits record this verification.** Continue from branch `codex/stillroom-encrypted-dm` or the portable bundle; read [docs/HANDOFF.md](docs/HANDOFF.md) for exact state, commands, test results and next steps.
+**Continued from the friend's pushed WIP checkpoint `4dfa6c3`.** Messaging, direct calls/sharing and resumable encrypted files are implemented experimentally; private groups remain absent. This continuation hardens capture cleanup, adds accurate desktop verification gates, and prepares a free hosted relay without a VPN. Read [docs/HANDOFF.md](docs/HANDOFF.md) for the current evidence and next steps. Earlier entries use the previous contributor's timezone.
 
-Implemented: verified identity cards, authenticated WSS relay, E2EE text/receipts, OS-protected encrypted history/outbox, retry/reconnect/dedup and isolated desktop IPC. Verified: 11/11 protocol tests, two real Electron renderer windows exchanging messages, encrypted storage, Windows packaging and packaged UI smoke. No cross-computer test, production relay, voice/sharing/files/groups, forward secrecy or security audit.
+Verified here: regression suite, independent test desktop clients with synthetic audio and direct/relay file transfers, synthetic 1440p video, Windows packaging and packaged renderer isolation. Own-window native screen capture is unavailable in this execution context and the strict test correctly fails instead of claiming success. Native devices, cross-PC routing and 1440p60 remain unverified. No forward secrecy or independent security audit. See portable receipts under `verification/`.
 
 Broad GitHub CLI authorization was blocked by automatic approval review; user declined those permissions and requested local checkpoints. The latest user instruction authorizes pushing the feature branch, but not broad CLI permissions or automatic merges. Ordinary Git fetch did complete; preserve remote main's two starter commits in the portable bundle.
 
@@ -21,11 +21,19 @@ Broad GitHub CLI authorization was blocked by automatic approval review; user de
 
 ## Next steps
 
-1. After remote verification, clone/switch to codex/stillroom-encrypted-dm; main still contains the old starter.
-2. Verify a real second-computer connection through a trusted reachable TLS relay using README instructions.
-3. Continue encrypted media slice B after reading SECURITY.md and PROJECT_PLAN.md; update both handoffs at each checkpoint.
+1. Deploy the prepared free Render relay only after the user selects/authorizes hosting; see docs/HOSTED_RELAY.md. The user explicitly declined Tailscale; do not install it.
+2. Verify two physical PCs, reconnect, real microphones, explicit native screen/system-audio capture and file resume. Measure actual receiver performance; 60fps is not established.
+3. Address protocol/key-lifecycle and storage limitations; private groups require a reviewed group-key design. Never automatically merge unrelated main/feature histories.
 
 ## Update history
+
+### 2026-10-18 — Continue media/file WIP and prepare VPN-free hosting
+
+- Started from `4dfa6c3` on codex/stillroom-encrypted-dm. Fixed capture shutdown on signalling/sender failure and asynchronous microphone/share completion after hangup; added lifecycle regression cases.
+- Feature verification now fails when native sharing cannot be tested; explicit `--skip-sharing` reports the omission. Added npm commands and portable receipts. Updated README to reflect inherited calls/files rather than claiming they are absent.
+- Added explicit managed-TLS hosted relay entry point, local TLS-ingress integration tests, free Render blueprint and operator instructions. Standard relay and desktop continue to require TLS/WSS; peer E2EE remains in place. No actual hosted service was deployed. User rejected Tailscale.
+- Validation and measured limitations are recorded in the current continuation section of docs/HANDOFF.md. No personal desktop/microphone capture or live reference-account actions occurred.
+- Final local verification: 28 regression tests passed; opt-in 2GiB transfer separately passed exact SHA-256 in 349205ms with sampled peak RSS 105590784 bytes. Strict native-sharing test correctly failed on unavailable capture; synthetic 1440p averaged 51.7fps. Windows package/startup checks passed.
 
 ### 2026-10-19 — Publish checkpoint authorized
 

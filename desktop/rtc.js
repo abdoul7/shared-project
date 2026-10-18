@@ -41,7 +41,12 @@ export class PeerSession {
     try{await this.audio.sender.replaceTrack(stream.getAudioTracks()[0]);await this.pc.setRemoteDescription(this.pendingOffer);await this.flushIce();const answer=await this.pc.createAnswer();await this.pc.setLocalDescription(answer);await this.gather(this.pc);this.answer={type:'answer',sdp:this.pc.localDescription.toJSON()};this.phase='connecting';await this.signal(this.answer);this.emit();}catch(e){this.hangup();throw e;}
   }
   reject(){return this.hangup();}
-  async hangup(){if(this.peerId)await this.signal({type:'end'}).catch(()=>{});this.cleanup();}
+  async hangup(){
+    const peer = this.peerId, callId = this.callId;
+    // Local consent ends immediately, even when signalling is unavailable.
+    this.cleanup();
+    if(peer)await this.sendControl(peer,'rtc',{callId,type:'end'}).catch(()=>{});
+  }
   cleanup(){clearTimeout(this.disconnectDeadline);clearInterval(this.retry);clearInterval(this.statsTimer);clearTimeout(this.deadline);for(const stream of [this.localStream,this.screenStream,this.remoteStream])stream?.getTracks().forEach(t=>t.stop());const pc=this.pc;this.pc=null;if(pc){pc.onconnectionstatechange=null;pc.close();}this.dc=null;this.localStream=null;this.screenStream=null;this.captureSettings=null;this.encodingLimits=null;this.remoteStream=new MediaStream();this.phase='idle';this.peerId=null;this.callId=null;this.stats={};this.emit();}
   async handleControl({from,namespace,data}){
     if(namespace!=='rtc'||!data||typeof data.callId!=='string'||!/^[a-f0-9-]{36}$/.test(data.callId))return;
@@ -62,10 +67,56 @@ export class PeerSession {
     }else if(data.type==='ice'&&data.candidate){if(this.pc.remoteDescription)await this.pc.addIceCandidate(data.candidate);else if(this.candidates.length<256)this.candidates.push(data.candidate);}
   }
   async flushIce(){for(const c of this.candidates.splice(0))await this.pc.addIceCandidate(c);}
-  async setMicrophone(id){if(!this.pc||!this.localStream)throw Error('No accepted call');const stream=await this.mic(id);try{const t=stream.getAudioTracks()[0];t.enabled=!this.muted;await this.audio.sender.replaceTrack(t);this.localStream.getTracks().forEach(x=>x.stop());this.localStream=stream;}catch(e){stream.getTracks().forEach(t=>t.stop());throw e;}}
+  async setMicrophone(id){
+    const pc = this.pc, previous = this.localStream, sender = this.audio?.sender;
+    if(!pc||!previous)throw Error('No accepted call');
+    const stream = await this.mic(id);
+    try {
+      if(this.pc!==pc||this.localStream!==previous)throw Error('Call changed during microphone selection');
+      const track = stream.getAudioTracks()[0];track.enabled=!this.muted;
+      await sender.replaceTrack(track);
+      if(this.pc!==pc||this.localStream!==previous)throw Error('Call changed during microphone selection');
+      previous.getTracks().forEach(t=>t.stop());this.localStream=stream;
+    }catch(error){stream.getTracks().forEach(t=>t.stop());throw error;}
+  }
   mute(value){this.muted=!!value;this.localStream?.getAudioTracks().forEach(t=>{t.enabled=!this.muted});this.emit();}
-  async share(stream,{width=2560,height=1440,fps=60}={}){if(!this.pc||this.phase!=='connected'){stream.getTracks().forEach(t=>t.stop());throw Error('Connect a call before sharing');}await this.stopShare();this.screenStream=stream;const video=stream.getVideoTracks()[0];if(!video){stream.getTracks().forEach(t=>t.stop());this.screenStream=null;throw Error('No screen video');}await video.applyConstraints({width:{ideal:width},height:{ideal:height},frameRate:{ideal:fps}}).catch(()=>{});video.contentHint='detail';await this.video.sender.replaceTrack(video);this.captureSettings=video.getSettings();this.encodingLimits={requestedMaxBitrate:12000000,requestedMaxFramerate:fps,applied:false};try{const parameters=this.video.sender.getParameters();if(!parameters.encodings?.length)parameters.encodings=[{}];parameters.encodings[0].maxBitrate=12000000;parameters.encodings[0].maxFramerate=fps;parameters.degradationPreference='balanced';await this.video.sender.setParameters(parameters);this.encodingLimits.applied=true;}catch{}await this.system.sender.replaceTrack(stream.getAudioTracks()[0]||null);video.onended=()=>this.stopShare();this.emit();}
-  async stopShare(){const stream=this.screenStream;this.screenStream=null;this.captureSettings=null;this.encodingLimits=null;if(this.pc){await this.video.sender.replaceTrack(null);await this.system.sender.replaceTrack(null);}stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});this.emit();}
+  async share(stream,{width=2560,height=1440,fps=60}={}){
+    const pc=this.pc, videoSender=this.video?.sender, audioSender=this.system?.sender;
+    const current=()=>{if(this.pc!==pc||this.phase!=='connected'||this.screenStream!==stream)throw Error('Call changed during screen sharing');};
+    try {
+      if(!pc||this.phase!=='connected')throw Error('Connect a call before sharing');
+      await this.stopShare();
+      if(this.pc!==pc||this.phase!=='connected')throw Error('Call changed during screen sharing');
+      this.screenStream=stream;
+      const video=stream.getVideoTracks()[0];if(!video)throw Error('No screen video');
+      await video.applyConstraints({width:{ideal:width},height:{ideal:height},frameRate:{ideal:fps}}).catch(()=>{});current();
+      video.contentHint='detail';await videoSender.replaceTrack(video);current();
+      this.captureSettings=video.getSettings();
+      this.encodingLimits={requestedMaxBitrate:12000000,requestedMaxFramerate:fps,applied:false};
+      try {
+        const parameters=videoSender.getParameters();if(!parameters.encodings?.length)parameters.encodings=[{}];
+        parameters.encodings[0].maxBitrate=12000000;parameters.encodings[0].maxFramerate=fps;parameters.degradationPreference='balanced';
+        await videoSender.setParameters(parameters);current();this.encodingLimits.applied=true;
+      }catch{current();}
+      await audioSender.replaceTrack(stream.getAudioTracks()[0]||null);current();
+      video.onended=()=>{if(this.screenStream===stream)this.stopShare().catch(()=>{});};this.emit();
+    }catch(error){
+      stream.getTracks().forEach(t=>{t.onended=null;t.stop();});
+      if(this.screenStream===stream)await this.stopShare();
+      throw error;
+    }
+  }
+  async stopShare(){
+    const stream=this.screenStream, videoSender=this.video?.sender, audioSender=this.system?.sender;
+    this.screenStream=null;this.captureSettings=null;this.encodingLimits=null;
+    // Stop capture before awaiting sender operations; failed/closed senders must
+    // never leave the OS capture active after the user presses Stop.
+    stream?.getTracks().forEach(t=>{t.onended=null;t.stop();});this.emit();
+    if(this.pc)await Promise.allSettled([
+      Promise.resolve().then(()=>videoSender.replaceTrack(null)),
+      Promise.resolve().then(()=>audioSender.replaceTrack(null)),
+    ]);
+  }
   async sendBulk(peerId,frame){const dc=this.dc;if(peerId!==this.peerId||this.phase!=='connected'||dc?.readyState!=='open')throw Error('Direct file channel unavailable');const value=JSON.stringify(frame);if(new TextEncoder().encode(value).length>32768)throw Error('File frame exceeds transport bound');while(dc.bufferedAmount>256*1024){await new Promise(r=>setTimeout(r,20));if(dc.readyState!=='open')throw Error('Direct file channel closed');}dc.send(value);}
   async measure(){const pc=this.pc;if(!pc)return;const report=await pc.getStats();if(this.pc!==pc)return;const incoming=[],outgoing=[];for(const r of report.values()){if(r.type==='inbound-rtp')incoming.push({kind:r.kind,width:r.frameWidth,height:r.frameHeight,fps:r.framesPerSecond,bytes:r.bytesReceived,framesDecoded:r.framesDecoded,framesDropped:r.framesDropped,jitter:r.jitter,packetsReceived:r.packetsReceived,packetsLost:r.packetsLost,codec:report.get(r.codecId)?.mimeType});if(r.type==='outbound-rtp')outgoing.push({kind:r.kind,width:r.frameWidth,height:r.frameHeight,fps:r.framesPerSecond,bytes:r.bytesSent,qualityLimitationReason:r.qualityLimitationReason,codec:report.get(r.codecId)?.mimeType});}this.stats={incoming,outgoing,rtt:[...report.values()].find(r=>r.type==='candidate-pair'&&r.state==='succeeded')?.currentRoundTripTime};this.emit();}
 }

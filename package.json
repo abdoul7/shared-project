@@ -2,7 +2,7 @@
   "name": "stillroom",
   "version": "0.1.0",
   "private": true,
-  "description": "Private desktop communication — experimental first slice",
+  "description": "Private desktop communication — experimental messaging, calls and transfers",
   "type": "module",
   "main": "desktop/main.js",
   "scripts": {
@@ -13,7 +13,11 @@
     "build": "node scripts/build.mjs",
     "smoke:desktop": "electron . --smoke",
     "smoke:ui": "electron . --smoke-ui",
-    "test:desktop-pair": "node scripts/desktop-pair.mjs --ui"
+    "test:desktop-pair": "node scripts/desktop-pair.mjs --ui",
+    "test:features": "node scripts/features-pair.mjs",
+    "test:features:no-sharing": "node scripts/features-pair.mjs --skip-sharing",
+    "test:features:relay": "node scripts/features-pair.mjs --relay-only",
+    "test:rtc": "electron scripts/rtc-probe.mjs"
   },
   "dependencies": {
     "libsodium-wrappers": "0.8.4",

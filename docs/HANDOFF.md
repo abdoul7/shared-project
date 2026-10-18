@@ -2,7 +2,37 @@
 
 ## Start here
 
-Stillroom is an original Windows-first private desktop communication application. Slice A is implemented and locally verified; the full product is unfinished. Read AGENTS.md, PROJECT_PLAN.md, SECURITY.md and ROOT_FINDINGS.md first. Supplied requirements supersede the starter plan. Excluded systems are removed from scope.
+Stillroom is an original Windows-first private desktop communication application. The full product is unfinished. Read AGENTS.md, PROJECT_PLAN.md, SECURITY.md and ROOT_FINDINGS.md first. Supplied requirements supersede the starter plan. Excluded systems are removed from scope. The CURRENT section below supersedes conflicting historical slice/status descriptions later in this document.
+
+## CURRENT — continuation on 2026-10-18 (America/Toronto)
+
+- Resumed the friend's pushed WIP `4dfa6c3` by clean fast-forward on `codex/stillroom-encrypted-dm`. Earlier dates use the original contributor's timezone. No history reconciliation or merge with main occurred.
+- Inherited experimental direct voice, screen selection/system-audio option, real receiver statistics, authenticated control envelopes and resumable encrypted 16KiB file transfers. Private groups still do not exist.
+- Fixed local capture stopping immediately on hangup, even while signalling stalls. Stop-sharing releases tracks before asynchronous sender operations. Failed attachment and late microphone/capture completion cannot retain capture or attach it to another call. Five focused regression tests cover these cases.
+- Corrected the feature harness: own-window capture failure now fails the strict feature test. `npm run test:features:no-sharing` is explicitly a partial verification, not a native-sharing pass.
+- User explicitly declined Tailscale. Prepared `render.yaml`, `server/hosted-relay.js` and docs/HOSTED_RELAY.md for a Free Render service. Nothing has been deployed and no account, repository authorization, payment or firewall settings were changed. Managed ingress terminates public TLS and forwards to the internal HTTP server; clients still require WSS and peer envelopes remain E2EE. Ordinary relay mode still requires its own TLS certificate. Two new tests verify configuration guards and two-client delivery through a local simulated TLS ingress.
+
+### Current verification and limits
+
+- `npm run check`: 24 JavaScript files checked.
+- `npm test`: 28 passed, 0 failed, 1 skipped (opt-in large benchmark), about 12 seconds. Includes the five media lifecycle and two managed-TLS ingress tests.
+- `npm run test:features:no-sharing`: two actual isolated Electron test clients; accepted call, mute/unmute, hangup, 196608-byte exact file and 14 direct frames on each side. Screen sharing explicitly skipped. Synthetic microphone only.
+- `node scripts/features-pair.mjs --relay-only`: 196608-byte exact file; each side recorded 14 relay frames and zero direct frames, no active call.
+- `npm run test:features`: FAILED because its own test window was unavailable to the capture picker; this execution context cannot establish native sharing. No personal screen capture was substituted. The old harness would have falsely passed this condition.
+- `npm run test:rtc`: synthetic animated canvas and fake audio over same-host direct WebRTC, 30.128s, receiver 2560x1440, average 51.7127fps, 0 reported dropped frames, about 3.63Mbps, sampled RTT 5ms. 60fps NOT achieved; not physical-device/native/cross-PC evidence.
+- `npm run build`: passed. Packaged `Stillroom.exe --smoke-ui` in a fresh test profile: passed, sandbox/context isolation true, Node integration false. This checks startup/isolation, not all packaged feature flows.
+- Latest opt-in 2GiB benchmark PASSED using the current staged-publication transfer engine: 2147483648 bytes, final SHA-256 matched, 349205ms measured transfer/publication time, sampled peak process RSS 105590784 bytes (about 101MiB), 16384-byte chunks. This is an in-process engine benchmark, not a desktop/network speed result; sampled RSS is not proof of a hard memory ceiling. Command: set `STILLROOM_LARGE_TRANSFER=2147483648`, then `node --test --test-name-pattern="multi GiB" test/transfers.test.js`.
+- Portable sanitized receipts: `verification/continuation-*.json`. Ignored `.local/` holds raw per-run artifacts. Real profiles, credentials and local source packages remain outside Git.
+
+### Setup and next actions
+
+Use `npm ci` (and Electron's install script if binary missing); `scripts/dev-relay.ps1` starts the loopback-only local TLS test service. For real remote testing, use docs/HOSTED_RELAY.md and the actual deployed WSS URL. No service URL exists yet. Do not install Tailscale. Do not use the shared localhost certificate remotely.
+
+1. The user must choose/sign into the hosting account and authorize a Free service before deployment. Review provider bandwidth/cold-start limits; do not promise unlimited free infrastructure. Both desktops must be online; there is no server mailbox.
+2. Perform real two-PC messaging and media tests. Native capture is blocked/unavailable only in this test context; investigate on the interactive desktop without broadening capture to the user's personal screen. Configure separate TURN only if direct connectivity requires it.
+3. Continue measured media reliability and file throughput, then reviewed group-key/membership design. Static-key DM/control forward secrecy, encrypted snapshot scalability, safe publication on non-hard-link filesystems, identity recovery and independent security review remain open.
+
+Exact checkpoint identity is `git rev-parse HEAD`; push results must be verified against the remote. Refresh this section before every new push. Later historical notes below are retained for provenance, not current instructions.
 
 ## Git and distribution
 

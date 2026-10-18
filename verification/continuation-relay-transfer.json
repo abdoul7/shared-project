@@ -1,0 +1,55 @@
+{
+  "independentProductionWindows": true,
+  "relayOnly": true,
+  "fakeMicrophone": false,
+  "exactFile": true,
+  "testedBytes": 196608,
+  "sourceSha256": "d6c8d37d7cfa5f5f720c4b7e527fe4b0fce40030c0825f82bbd40a2442fababa",
+  "results": [
+    {
+      "exitCode": 0,
+      "role": "a",
+      "success": true,
+      "renderer": true,
+      "callTested": false,
+      "incomingConsent": false,
+      "connected": false,
+      "mute": false,
+      "file": true,
+      "sharing": {
+        "passed": false,
+        "reason": "Not attempted"
+      },
+      "hangup": false,
+      "encryptedWS": true,
+      "noActiveCall": true,
+      "transferTransport": {
+        "directFrames": 0,
+        "relayFrames": 14
+      }
+    },
+    {
+      "exitCode": 0,
+      "role": "b",
+      "success": true,
+      "renderer": true,
+      "callTested": false,
+      "incomingConsent": false,
+      "connected": false,
+      "mute": false,
+      "file": true,
+      "sharing": {
+        "passed": false,
+        "reason": "Not attempted"
+      },
+      "hangup": false,
+      "encryptedWS": true,
+      "noActiveCall": true,
+      "transferTransport": {
+        "directFrames": 0,
+        "relayFrames": 14
+      }
+    }
+  ],
+  "success": true
+}

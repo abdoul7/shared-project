@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-18",
+  "timezone": "America/Toronto",
+  "inheritedCheckpoint": "4dfa6c3",
+  "syntax": {
+    "files": 24,
+    "passed": true
+  },
+  "regression": {
+    "passed": 28,
+    "failed": 0,
+    "skipped": 1,
+    "durationMs": 12007.8049
+  },
+  "desktop": {
+    "callsAndDirectFiles": "passed, synthetic microphone, sharing explicitly skipped",
+    "relayFiles": "passed",
+    "nativeSharing": "unavailable; strict test failed correctly",
+    "packagedStartup": "passed"
+  },
+  "hostedRelay": {
+    "simulatedTlsIngress": "passed",
+    "externalDeployment": "not performed"
+  },
+  "security": {
+    "independentAudit": false,
+    "messageForwardSecrecy": false
+  },
+  "limits": [
+    "No real two-computer/network validation.",
+    "No physical microphone or system-audio verification.",
+    "No verified native 1440p60.",
+    "Private groups not implemented."
+  ]
+}

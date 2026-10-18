@@ -1,0 +1,48 @@
+{
+  "sharingRequired": true,
+  "success": false,
+  "fakeMicrophone": true,
+  "results": [
+    {
+      "role": "a",
+      "success": false,
+      "renderer": true,
+      "callTested": true,
+      "incomingConsent": false,
+      "connected": true,
+      "mute": true,
+      "file": true,
+      "sharing": {
+        "passed": false,
+        "reason": "Own Stillroom window unavailable in capture picker",
+        "skipped": false
+      },
+      "hangup": true,
+      "transferTransport": {
+        "directFrames": 14,
+        "relayFrames": 0
+      }
+    },
+    {
+      "role": "b",
+      "success": false,
+      "renderer": true,
+      "callTested": true,
+      "incomingConsent": true,
+      "connected": true,
+      "mute": true,
+      "file": true,
+      "sharing": {
+        "passed": false,
+        "reason": "Peer test window could not be captured; no sharing marker was produced.",
+        "skipped": false
+      },
+      "hangup": true,
+      "transferTransport": {
+        "directFrames": 14,
+        "relayFrames": 0
+      }
+    }
+  ],
+  "limitation": "Own-window native capture unavailable in this execution context; not a screen-sharing pass."
+}

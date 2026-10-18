@@ -16,14 +16,14 @@ The previous starter repo had no application or stack. This request supersedes t
 - Automated real local TLS sockets, unauthorized/tampered/replay/restart/reconnect tests, desktop smoke and Windows build.
 - Separate-computer/cross-network manual run with teammate remains a required gate; local tests cannot substitute.
 
-### B — voice and screen sharing (not implemented)
+### B — voice and screen sharing (experimental implementation; real-device/cross-PC gates open)
 
 - Explicit calls, microphone selection/mute and consented screen/window capture. System audio where supported.
 - Authenticated peer media setup with E2EE content, secure TURN fallback; runtime codec selection and hardware acceleration where available.
 - Requested 2560x1440/60 target separate from actual receiver metrics. Adaptive bitrate, obvious indicator and stop controls.
 - Sustained receiver test records machines, network, duration, bitrate, frames/drops and latency evidence; no unmeasured performance claim.
 
-### C — encrypted resumable transfers (not implemented)
+### C — encrypted resumable transfers (experimental implementation; desktop large-file/cross-PC gates open)
 
 - Any file type/device-supported size without arbitrary file/daily caps; streaming/chunking with bounded memory, backpressure and call-aware bandwidth scheduling.
 - Progress/speed/bytes/ETA, cancel/retry/resume, authenticated chunks and final integrity; explicit safe destination, partial file, no overwrite/traversal or autoexecution.
@@ -42,5 +42,7 @@ The previous starter repo had no application or stack. This request supersedes t
 - Protocol review and key-lifecycle hardening before production readiness.
 
 ## Checkpoint policy
+
+Current network choice: no Tailscale/VPN. Prepared Free Render relay deployment is in docs/HOSTED_RELAY.md; account authorization/deployment and two-PC validation remain open. The provider's infrastructure limits are separate from the app's no-artificial-file-cap requirement. Current measurements live in docs/HANDOFF.md and verification/; neither 1440p60 nor complete product readiness has been established.
 
 Update docs/HANDOFF.md and root HANDOFF.md after meaningful slices and before every push. Preserve existing changes, use codex/ feature branches, coherent commits and draft PRs; never merge automatically. Do not commit reference packages, secret runtime profiles or personal captures.
