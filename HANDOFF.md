@@ -4,7 +4,7 @@ Read this file before making changes. Update it with every push so the next cont
 
 ## Current state (updated 2026-10-19)
 
-**Stillroom slice A is implemented and locally verified. The user has now authorized pushing the feature checkpoint; upload is pending verification.** Continue from branch `codex/stillroom-encrypted-dm` or the portable bundle; read [docs/HANDOFF.md](docs/HANDOFF.md) for exact state, commands, test results and next steps.
+**Stillroom slice A is implemented and locally verified. The feature checkpoint was pushed and verified on GitHub at 6d3673d181c1bad47ed9524cb5e1391ff605a2a0. Subsequent documentation commits record this verification.** Continue from branch `codex/stillroom-encrypted-dm` or the portable bundle; read [docs/HANDOFF.md](docs/HANDOFF.md) for exact state, commands, test results and next steps.
 
 Implemented: verified identity cards, authenticated WSS relay, E2EE text/receipts, OS-protected encrypted history/outbox, retry/reconnect/dedup and isolated desktop IPC. Verified: 11/11 protocol tests, two real Electron renderer windows exchanging messages, encrypted storage, Windows packaging and packaged UI smoke. No cross-computer test, production relay, voice/sharing/files/groups, forward secrecy or security audit.
 
@@ -31,7 +31,7 @@ Broad GitHub CLI authorization was blocked by automatic approval review; user de
 
 - User requested a push, superseding local-only distribution. The verified code checkpoint is 1a711cf2792702c22fceccbe9d6e8763050a22b4; later commits update documentation only.
 - Validation remains 11/11 protocol tests plus desktop two-window/build/smoke checks; no code changed for publication.
-- Upload status must be verified against origin before claiming availability. Feature and main have unrelated roots; do not automatically merge them.
+- Upload verified with git ls-remote: 6d3673d181c1bad47ed9524cb5e1391ff605a2a0 matches local HEAD at verification. Feature and main have unrelated roots; do not automatically merge them.
 - Next: verify remote branch, then continue the second-computer connection test.
 
 ### 2026-10-19 — Verified encrypted desktop messaging slice

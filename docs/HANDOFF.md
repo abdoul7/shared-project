@@ -12,7 +12,7 @@ Stillroom is an original Windows-first private desktop communication application
 - Initial local implementation checkpoint: a0c433c (resolve full SHA with git log); later verification/handoff commits follow. Current checkpoint: `git rev-parse HEAD` (a file cannot contain its own commit hash).
 - Remote main at last fetch: 49354749837a88308e487bab68d08401785a595f; previous: c62946fa8e4c9b45020caf89ff1eb87591cb8318. Remote tree contains only .gitignore, README, AGENTS and HANDOFF. Browser showed zero open and zero closed PRs. No other application work found.
 - Local checkout initially had no history; first source checkpoint was saved before Git fetch completed. Both local checkpoint history and remote starter history are preserved as separate refs in the portable bundle after comparison of all four starter files. They have unrelated roots and have NOT been merged; the user instructed no automatic merges. Future integration requires an explicitly authorized history reconciliation. No remote history is rewritten.
-- CURRENT USER INSTRUCTION: PUSH THE FEATURE CHECKPOINT. The earlier local-only direction is superseded; upload is pending remote verification. Historical state: No implementation push, remote feature branch or PR exists. Automatic approval review rejected GitHub CLI's broad account permissions; user declined them. Do not retry broad CLI authorization. The current user instruction authorizes a feature-branch push using existing Git credentials. Ordinary Git fetch later completed, which does not authorize publishing.
+- CURRENT USER INSTRUCTION: PUSH THE FEATURE CHECKPOINT. The earlier local-only direction is superseded; upload succeeded and git ls-remote verified 6d3673d181c1bad47ed9524cb5e1391ff605a2a0. This later documentation checkpoint records that result. Historical state: The previous local-only checkpoint had no remote branch. The feature branch now exists; no PR exists because main and feature have no common ancestor. Automatic approval review rejected GitHub CLI's broad account permissions; user declined them. Do not retry broad CLI authorization. The current user instruction authorizes a feature-branch push using existing Git credentials. Ordinary Git fetch later completed, which does not authorize publishing.
 - Portable source/history bundle: `.local/Stillroom-checkpoint.bundle`, generated from the feature branch and remote main refs after final local checkpoint (excluding internal tool snapshot refs). Verify: `git bundle verify .local/Stillroom-checkpoint.bundle`. No npm dependencies, reference package, profiles or packaged executable included.
 
 To continue from a manually transferred bundle on another computer:
@@ -24,7 +24,7 @@ git remote set-url origin https://github.com/abdoul7/shared-project.git
 npm ci
 ```
 
-Before upload verification, use the local bundle. After upload is verified, clone the codex/stillroom-encrypted-dm feature branch; main remains the starter. Do not send credentials or OS-encrypted profiles to the teammate.
+Upload has been verified; clone the codex/stillroom-encrypted-dm feature branch; main remains the starter. Do not send credentials or OS-encrypted profiles to the teammate.
 
 ## Completed behavior
 
