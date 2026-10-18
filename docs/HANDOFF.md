@@ -12,7 +12,7 @@ Stillroom is an original Windows-first private desktop communication application
 - Initial local implementation checkpoint: a0c433c (resolve full SHA with git log); later verification/handoff commits follow. Current checkpoint: `git rev-parse HEAD` (a file cannot contain its own commit hash).
 - Remote main at last fetch: 49354749837a88308e487bab68d08401785a595f; previous: c62946fa8e4c9b45020caf89ff1eb87591cb8318. Remote tree contains only .gitignore, README, AGENTS and HANDOFF. Browser showed zero open and zero closed PRs. No other application work found.
 - Local checkout initially had no history; first source checkpoint was saved before Git fetch completed. Both local checkpoint history and remote starter history are preserved as separate refs in the portable bundle after comparison of all four starter files. They have unrelated roots and have NOT been merged; the user instructed no automatic merges. Future integration requires an explicitly authorized history reconciliation. No remote history is rewritten.
-- USER INSTRUCTION: KEEP CHECKPOINTS LOCAL. No implementation push, remote feature branch or PR exists. Automatic approval review rejected GitHub CLI's broad account permissions; user declined them. Do not retry authorization or publish without new instructions. Ordinary Git fetch later completed, which does not authorize publishing.
+- CURRENT USER INSTRUCTION: PUSH THE FEATURE CHECKPOINT. The earlier local-only direction is superseded; upload is pending remote verification. Historical state: No implementation push, remote feature branch or PR exists. Automatic approval review rejected GitHub CLI's broad account permissions; user declined them. Do not retry broad CLI authorization. The current user instruction authorizes a feature-branch push using existing Git credentials. Ordinary Git fetch later completed, which does not authorize publishing.
 - Portable source/history bundle: `.local/Stillroom-checkpoint.bundle`, generated from the feature branch and remote main refs after final local checkpoint (excluding internal tool snapshot refs). Verify: `git bundle verify .local/Stillroom-checkpoint.bundle`. No npm dependencies, reference package, profiles or packaged executable included.
 
 To continue from a manually transferred bundle on another computer:
@@ -24,7 +24,7 @@ git remote set-url origin https://github.com/abdoul7/shared-project.git
 npm ci
 ```
 
-Owner transfers the bundle through their chosen private channel. GitHub's starter does not contain this implementation. Do not send credentials or OS-encrypted profiles to the teammate.
+Before upload verification, use the local bundle. After upload is verified, clone the codex/stillroom-encrypted-dm feature branch; main remains the starter. Do not send credentials or OS-encrypted profiles to the teammate.
 
 ## Completed behavior
 
@@ -70,7 +70,7 @@ Shared localhost TLS fixture/key is PUBLIC TEST DATA, never deploy remotely. Rea
 
 No production relay deployed. Operator must supply reachable DNS/IP, inbound TCP port, trusted TLS certificate/key and always-running Node service. Configure RELAY_TLS_CERT, RELAY_TLS_KEY, RELAY_HOST, RELAY_PORT, RELAY_PUBLIC_URL (README has exact commands without secrets). Both clients use identical public WSS URL and system trust or authenticated private CA. Never disable TLS checks.
 
-Second developer: obtain source bundle while local-only direction holds, run npm ci/npm start on Windows, verify public cards, connect to that relay. Both parties need overlapping online time: relay has no offline mailbox; sender retains pending ciphertext until delivery. Operator compute/bandwidth/future TURN costs are infrastructure expenses, not product tiers.
+Second developer: obtain the verified remote feature branch (or local source bundle if upload fails), run npm ci/npm start on Windows, verify public cards, connect to that relay. Both parties need overlapping online time: relay has no offline mailbox; sender retains pending ciphertext until delivery. Operator compute/bandwidth/future TURN costs are infrastructure expenses, not product tiers.
 
 Runtime variable: STILLROOM_PROFILE. Test-only: STILLROOM_SMOKE, STILLROOM_SMOKE_OUTPUT, STILLROOM_SMOKE_SCREENSHOT, STILLROOM_PAIR_DIRECTORY, STILLROOM_PAIR_ROLE, STILLROOM_PAIR_URL, STILLROOM_PAIR_CA. Never commit generated private profiles or secrets.
 
@@ -89,6 +89,6 @@ Root reference is the supplied local Windows installation only. REA inspected PE
 
 ## Next three actions
 
-1. Transfer local Git bundle privately if continuing elsewhere; verify branch and npm ci. Keep checkpoints local until user changes direction.
+1. Verify upload of codex/stillroom-encrypted-dm, then clone that branch and npm ci. Do not use main for the implementation. Do not merge histories automatically.
 2. Arrange trusted reachable relay; run/record real two-computer messaging, reconnect and restart tests. Fix failures before claiming cross-computer readiness.
 3. Continue slice B: authenticated peer session setup plus E2EE voice/sharing, then sustained receiver-side 1440p60 measurements. Preserve all file/group/security acceptance criteria in PROJECT_PLAN.md.
