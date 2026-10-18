@@ -60,6 +60,8 @@ Only the relay's TLS private key belongs on the server; client identity private 
 
 ```powershell
 npm run smoke:desktop
+npm run smoke:ui
+npm run test:desktop-pair
 npm run build
 ```
 
@@ -67,6 +69,6 @@ The Windows output is `dist/Stillroom-win32-x64/Stillroom.exe`; distribute the *
 
 ## Collaboration
 
-Read `AGENTS.md`, `HANDOFF.md` and `docs/HANDOFF.md` first. Work on a descriptive `codex/` branch, update both handoff entry points before every push, and create a draft PR. Preserve prior work; do not force-push or auto-merge. Never commit reference packages, personal captures, runtime profiles or real secrets.
+Read `AGENTS.md`, `HANDOFF.md` and `docs/HANDOFF.md` first. **The user currently requires local checkpoints only: the implementation has not been pushed.** A portable Git bundle is available locally; see the handoff for continuation on another computer. Publishing and a draft PR require a later change to that instruction. Work on a descriptive `codex/` branch and update both handoff entry points before any subsequently authorized push. Preserve prior work; do not force-push or auto-merge. Never commit reference packages, personal captures, runtime profiles or real secrets.
 
 Hosting, bandwidth and future TURN/storage costs are operator infrastructure costs. They do not create user-facing tiers or artificial quotas. Third-party software retains its upstream licenses; our implementation contains no reference product branding or assets.

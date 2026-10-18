@@ -1,0 +1,27 @@
+{
+  "independentProcesses": true,
+  "results": [
+    {
+      "pair": true,
+      "renderer": true,
+      "role": "a",
+      "success": true,
+      "unverifiedRejected": true,
+      "plaintextRejected": true,
+      "history": 2,
+      "delivered": 1,
+      "plaintextAbsent": true
+    },
+    {
+      "pair": true,
+      "renderer": true,
+      "role": "b",
+      "success": true,
+      "unverifiedRejected": true,
+      "plaintextRejected": true,
+      "history": 2,
+      "delivered": 1,
+      "plaintextAbsent": true
+    }
+  ]
+}

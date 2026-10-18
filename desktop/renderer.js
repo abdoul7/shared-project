@@ -13,6 +13,7 @@ function render(next) {
   if (!selected && state.contacts.length) selected = state.contacts[0].id;
   $('status').textContent = state.connected ? '● Connected' : '○ Disconnected';
   $('status').className = state.connected ? 'online' : '';
+  $('connectionIssue').textContent = state.error || '';
   $('contacts').replaceChildren();
   for (const contact of state.contacts) {
     const button = element('button', null, 'contact' + (selected === contact.id ? ' active' : ''));
@@ -30,7 +31,7 @@ function render(next) {
       const mine = message.from === state.id;
       const row = element('div', null, mine ? 'message mine' : 'message');
       row.append(element('div', message.text, 'bubble'));
-      const label = mine ? (message.status === 'delivered' ? 'Delivered' : message.status === 'failed' ? 'Failed · retry when connected' : state.connected ? 'Sending · awaiting receipt' : 'Pending · offline') : 'Received';
+      const label = mine ? (message.status === 'delivered' ? 'Delivered' : message.status === 'failed' ? 'Delivery not confirmed · Retry' : state.connected ? 'Sending · awaiting receipt' : 'Pending · offline') : 'Received';
       const meta = element('div', new Date(message.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + label, 'meta');
       if (mine && message.status !== 'delivered') { const retry = element('button', 'Retry'); retry.onclick = async () => { const next = await call('retry', message.id); if (next) render(next); }; meta.append(retry); }
       row.append(meta); $('messages').append(row);

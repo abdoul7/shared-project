@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, safeStorage, clipboard, session } 
 import { readFile, writeFile, rename, mkdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 import { ChatClient } from '../core/client.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -15,13 +16,14 @@ const snapshot = path.join(app.getPath('userData'), 'snapshot.enc');
 let fullStore = null;
 let saves = Promise.resolve();
 const store = {
-  async load() { return fullStore?.client ?? null; },
+  async load() { return structuredClone(fullStore?.client ?? null); },
   async save(value) {
-    fullStore = { settings, client: value };
-    const bytes = safeStorage.encryptString(JSON.stringify(fullStore));
+    const committed = structuredClone({ settings, client: value });
+    const bytes = safeStorage.encryptString(JSON.stringify(committed));
     saves = saves.catch(() => {}).then(async () => {
       await writeFile(snapshot + '.tmp', bytes, { mode: 0o600 });
       await rename(snapshot + '.tmp', snapshot);
+      fullStore = committed;
     });
     return saves;
   }
@@ -30,10 +32,13 @@ function publicState() { const state = client.state(); return { ...state, outbox
 function trusted(event) {
   if (!win || event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame || event.senderFrame.url !== page) throw new Error('Untrusted request');
 }
+let actions = Promise.resolve();
 function handle(name, action) {
   ipcMain.handle(name, async (event, ...args) => {
     trusted(event);
-    try { return { ok: true, value: await action(...args) }; }
+    const work = actions.then(() => action(...args));
+    actions = work.catch(() => {});
+    try { return { ok: true, value: await work }; }
     catch { return { ok: false, error: 'Action failed. Check the relay, contact card, or local storage and try again.' }; }
   });
 }
@@ -43,8 +48,30 @@ try {
   await mkdir(app.getPath('userData'), { recursive: true });
   try { fullStore = JSON.parse(safeStorage.decryptString(await readFile(snapshot))); settings = fullStore.settings; }
   catch (e) { if (e.code !== 'ENOENT') throw new Error('Encrypted profile cannot be opened'); }
+  if (process.argv.includes('--smoke-pair') || process.argv.includes('--smoke-ui-pair')) settings = { url: process.env.STILLROOM_PAIR_URL, ca: await readFile(process.env.STILLROOM_PAIR_CA, 'utf8') };
   client = await ChatClient.create({ store, url: settings.url, ca: settings.ca || undefined });
-  if (process.env.STILLROOM_SMOKE === '1' || process.argv.includes('--smoke')) {
+  if (process.argv.includes('--smoke-pair')) {
+    const directory = process.env.STILLROOM_PAIR_DIRECTORY;
+    const role = process.env.STILLROOM_PAIR_ROLE;
+    if (!['a','b'].includes(role)) throw new Error('Invalid test role');
+    await writeFile(path.join(directory, role + '.card.tmp'), JSON.stringify(client.contactCard()));
+    await rename(path.join(directory, role + '.card.tmp'), path.join(directory, role + '.card'));
+    let peer;
+    for (let i = 0; i < 200 && !peer; i++) { try { peer = JSON.parse(await readFile(path.join(directory, (role === 'a' ? 'b' : 'a') + '.card'), 'utf8')); } catch { await delay(100); } }
+    if (!peer) throw new Error('Test peer unavailable');
+    await client.addContact(peer); // Controlled test-only public-card exchange; ordinary UI requires human verification.
+    await client.connect();
+    const text = 'Independent Electron process probe ' + role;
+    const id = await client.send(peer.id, text);
+    let success = false;
+    for (let i = 0; i < 200; i++) { const s = client.state(); if (s.history.find(m => m.id === id)?.status === 'delivered' && s.history.some(m => m.from === peer.id)) { success = true; break; } await delay(100); }
+    await client.disconnect(); await saves;
+    const encrypted = await readFile(snapshot);
+    const durable = JSON.parse(safeStorage.decryptString(encrypted)).client;
+    const result = { pair: true, role, success, history: durable.history.length, delivered: durable.history.filter(m => m.status === 'delivered').length, plaintextAbsent: !encrypted.includes(Buffer.from(text)) };
+    await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, JSON.stringify(result));
+    app.exit(success && result.plaintextAbsent ? 0 : 1);
+  } else if (process.env.STILLROOM_SMOKE === '1' || process.argv.includes('--smoke')) {
     const sample = 'Stillroom storage probe';
     const storage = safeStorage.decryptString(safeStorage.encryptString(sample)) === sample;
     const result = { smoke: true, storage, identity: typeof client.state().id === 'string' };
@@ -90,18 +117,47 @@ try {
     handle('retry', async id => { if (typeof id !== 'string' || id.length > 128) throw new Error('Invalid message'); await client.retry(id); return publicState(); });
     client.subscribe(() => win?.webContents.send('changed', publicState()));
     await win.loadFile(path.join(here, 'index.html'));
+    if (process.argv.includes('--smoke-ui-pair')) {
+      await delay(800);
+      const directory = process.env.STILLROOM_PAIR_DIRECTORY, role = process.env.STILLROOM_PAIR_ROLE;
+      if (!['a','b'].includes(role)) throw new Error('Invalid test role');
+      await writeFile(path.join(directory, role + '.card.tmp'), JSON.stringify(client.contactCard()));
+      await rename(path.join(directory, role + '.card.tmp'), path.join(directory, role + '.card'));
+      let peer;
+      for (let i = 0; i < 200 && !peer; i++) { try { peer = JSON.parse(await readFile(path.join(directory, (role === 'a' ? 'b' : 'a') + '.card'), 'utf8')); } catch { await delay(100); } }
+      if (!peer) throw new Error('Test peer unavailable');
+      const input = JSON.stringify(JSON.stringify(peer));
+      const unverified = await win.webContents.executeJavaScript(`window.stillroom.call('contact',${input},false)`);
+      const plaintext = await win.webContents.executeJavaScript(`window.stillroom.call('connect','ws://localhost:8443')`);
+      await win.webContents.executeJavaScript(`document.getElementById('add').click(); document.getElementById('card').value=${input}; document.getElementById('card').dispatchEvent(new Event('input')); document.getElementById('verified').checked=true; document.getElementById('approve').click();`);
+      for (let i=0;i<100 && !client.state().contacts.length;i++) await delay(50);
+      await win.webContents.executeJavaScript(`window.stillroom.call('connect',${JSON.stringify(settings.url)})`);
+      const text = 'Renderer composer probe ' + role;
+      await win.webContents.executeJavaScript(`document.getElementById('text').value=${JSON.stringify(text)}; document.getElementById('compose').requestSubmit();`);
+      let success = false;
+      for (let i=0;i<200;i++) { const s=client.state(); if(s.history.some(m=>m.text===text&&m.status==='delivered') && s.history.some(m=>m.from===peer.id)) { success=true;break; } await delay(100); }
+      await client.disconnect(); await saves;
+      const encrypted=await readFile(snapshot), durable=JSON.parse(safeStorage.decryptString(encrypted)).client;
+      const result={pair:true,renderer:true,role,success,unverifiedRejected:unverified.ok===false,plaintextRejected:plaintext.ok===false,history:durable.history.length,delivered:durable.history.filter(m=>m.status==='delivered').length,plaintextAbsent:!encrypted.includes(Buffer.from(text))};
+      await writeFile(process.env.STILLROOM_SMOKE_OUTPUT,JSON.stringify(result));
+      app.exit(success&&result.unverifiedRejected&&result.plaintextRejected&&result.plaintextAbsent?0:1);
+    }
     if (process.argv.includes('--smoke-ui')) {
+      await delay(800);
       const observed = await win.webContents.executeJavaScript(`({title:document.title,bridge:typeof window.stillroom.call==='function',node:typeof process,contacts:!!document.getElementById('contacts'),composer:!!document.getElementById('compose')})`);
       const prefs = win.webContents.getLastWebPreferences();
       const result = { smokeUI: true, ...observed, sandbox: prefs.sandbox, contextIsolation: prefs.contextIsolation, nodeIntegration: prefs.nodeIntegration };
       if (process.env.STILLROOM_SMOKE_OUTPUT) await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, JSON.stringify(result));
-      if (process.env.STILLROOM_SMOKE_SCREENSHOT) await writeFile(process.env.STILLROOM_SMOKE_SCREENSHOT, (await win.webContents.capturePage()).toPNG());
+      if (process.env.STILLROOM_SMOKE_SCREENSHOT) {
+        const image = await win.webContents.capturePage();
+        await writeFile(process.env.STILLROOM_SMOKE_SCREENSHOT, image.toPNG());
+      }
       console.log(JSON.stringify(result));
       app.exit(observed.bridge && observed.contacts && observed.composer && observed.node === 'undefined' && prefs.sandbox && prefs.contextIsolation && !prefs.nodeIntegration ? 0 : 1);
     }
   }
 } catch {
-  if (process.env.STILLROOM_SMOKE === '1' || process.argv.includes('--smoke')) { const result = JSON.stringify({ smoke: true, storage: false }); console.log(result); if (process.env.STILLROOM_SMOKE_OUTPUT) await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, result); }
+  if (process.env.STILLROOM_SMOKE === '1' || process.argv.some(a => a.startsWith('--smoke'))) { const result = JSON.stringify({ smoke: true, storage: false }); console.log(result); if (process.env.STILLROOM_SMOKE_OUTPUT) await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, result); }
   else dialog.showErrorBox('Stillroom cannot unlock this profile', 'OS-protected storage is unavailable, damaged, or belongs to another account. No plaintext fallback is used.');
   app.exit(1);
 }

@@ -10,8 +10,10 @@
     "relay": "node server/relay.js",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "check": "node scripts/check.mjs",
-    "build": "electron-packager . Stillroom --platform=win32 --arch=x64 --out=dist --overwrite --ignore=^/(docs|test|scripts|server|github-.*|\\.git)(/|$)",
-    "smoke:desktop": "electron . --smoke"
+    "build": "node scripts/build.mjs",
+    "smoke:desktop": "electron . --smoke",
+    "smoke:ui": "electron . --smoke-ui",
+    "test:desktop-pair": "node scripts/desktop-pair.mjs --ui"
   },
   "dependencies": {
     "libsodium-wrappers": "0.8.4",
