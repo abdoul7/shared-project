@@ -1,0 +1,64 @@
+{
+  "independentProductionWindows": true,
+  "packaged": true,
+  "relayOnly": false,
+  "sharingRequired": true,
+  "fakeMicrophone": true,
+  "exactFile": true,
+  "testedBytes": 196608,
+  "sourceSha256": "d6c8d37d7cfa5f5f720c4b7e527fe4b0fce40030c0825f82bbd40a2442fababa",
+  "results": [
+    {
+      "exitCode": 0,
+      "role": "a",
+      "success": true,
+      "renderer": true,
+      "callTested": true,
+      "incomingConsent": false,
+      "connected": true,
+      "mute": true,
+      "file": true,
+      "sharing": {
+        "passed": true,
+        "source": "own Stillroom test window",
+        "systemAudio": false,
+        "stopped": true,
+        "skipped": false
+      },
+      "hangup": true,
+      "performanceReport": true,
+      "systemTrustReset": true,
+      "transferTransport": {
+        "directFrames": 14,
+        "relayFrames": 0
+      }
+    },
+    {
+      "exitCode": 0,
+      "role": "b",
+      "success": true,
+      "renderer": true,
+      "callTested": true,
+      "incomingConsent": true,
+      "connected": true,
+      "mute": true,
+      "file": true,
+      "sharing": {
+        "passed": true,
+        "width": 1104,
+        "height": 740,
+        "playbackFrames": 1,
+        "stats": "Requested sharing target: 2560×1440 at 60fps (actual depends on hardware/network).\nReceiver: 1104×740 · —fps · video/VP8 · decoded 1 / dropped 0\nSender: —×— · —fps · video/VP8 · limitation none\nSustained receiver: 0.000fps over 1.0s · 0 dropped / 0 freezes. Collecting a full measurement window. Target: ≥59.9fps for 60s at 2560×1440.\nRound trip: 0ms. Media is direct peer encrypted; TURN forwards ciphertext.",
+        "skipped": false
+      },
+      "hangup": true,
+      "performanceReport": true,
+      "systemTrustReset": true,
+      "transferTransport": {
+        "directFrames": 14,
+        "relayFrames": 0
+      }
+    }
+  ],
+  "success": true
+}

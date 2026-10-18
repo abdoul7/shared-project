@@ -20,6 +20,7 @@ export async function mountFeatures({ getSelected, notice }) {
       $('acceptCall').hidden = $('rejectCall').hidden = state.phase !== 'ringing';
       for (const id of ['muteCall', 'shareScreen']) $(id).disabled = state.phase !== 'connected';
       $('stopShare').disabled = !state.sharing;
+      $('exportStreamReport').disabled = !state.reportAvailable;
       $('muteCall').textContent = state.muted ? 'Unmute' : 'Mute';
       $('sharingIndicator').textContent = state.sharing ? '● SHARING ACTIVE — selected source is being transmitted. Stop sharing to end capture.' : '';
       $('callPeer').disabled = !getSelected() || !connected || state.phase !== 'idle';
@@ -35,10 +36,12 @@ export async function mountFeatures({ getSelected, notice }) {
       }
       const incoming = state.stats.incoming?.find(r => r.kind === 'video');
       const outgoing = state.stats.outgoing?.find(r => r.kind === 'video');
+      const sustained = state.stats.sustained;
       $('mediaStats').textContent = [
         'Requested sharing target: 2560×1440 at 60fps (actual depends on hardware/network).',
         incoming ? `Receiver: ${incoming.width || '—'}×${incoming.height || '—'} · ${incoming.fps ?? '—'}fps · ${incoming.codec || 'negotiating'} · decoded ${incoming.framesDecoded ?? 0} / dropped ${incoming.framesDropped ?? 0}` : 'Receiver: no video measurements yet.',
         outgoing ? `Sender: ${outgoing.width || '—'}×${outgoing.height || '—'} · ${outgoing.fps ?? '—'}fps · ${outgoing.codec || 'negotiating'} · limitation ${outgoing.qualityLimitationReason || 'unknown'}` : '',
+        sustained?.averageFps != null ? `Sustained receiver: ${sustained.averageFps.toFixed(3)}fps over ${sustained.durationSeconds.toFixed(1)}s · ${sustained.droppedFrames} dropped / ${sustained.freezes} freezes. ${sustained.reason}. Target: ≥59.9fps for 60s at 2560×1440.` : '',
         `Round trip: ${state.stats.rtt == null ? 'unavailable' : Math.round(state.stats.rtt * 1000) + 'ms'}. Media is direct peer encrypted; TURN forwards ciphertext.`,
       ].filter(Boolean).join('\n');
     },
@@ -56,6 +59,11 @@ export async function mountFeatures({ getSelected, notice }) {
   $('endCall').onclick = () => run(() => rtc.hangup());
   $('muteCall').onclick = () => rtc.mute(!rtc.muted);
   $('stopShare').onclick = () => run(() => rtc.stopShare());
+  $('exportStreamReport').onclick = () => run(async () => {
+    const report = rtc.report();
+    if (!report) throw Error('No stream measurements yet');
+    if (await invoke('media-report', report)) notice('Performance report saved. It contains measurements, with no contact IDs, content, keys or IP addresses.');
+  });
   async function microphones() {
     const devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
     const old = $('microphone').value; $('microphone').replaceChildren(new Option('System default', ''));

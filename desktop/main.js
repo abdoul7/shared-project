@@ -53,7 +53,7 @@ try {
   await mkdir(app.getPath('userData'), { recursive: true });
   try { fullStore = JSON.parse(safeStorage.decryptString(await readFile(snapshot))); settings = fullStore.settings; }
   catch (e) { if (e.code !== 'ENOENT') throw new Error('Encrypted profile cannot be opened'); }
-  if (process.argv.includes('--smoke-pair') || process.argv.includes('--smoke-ui-pair') || process.argv.includes('--smoke-features')) settings = { url: process.env.STILLROOM_PAIR_URL, ca: await readFile(process.env.STILLROOM_PAIR_CA, 'utf8') };
+  if (process.argv.includes('--smoke-pair') || process.argv.includes('--smoke-ui-pair') || process.argv.includes('--smoke-features')) settings = { url: process.env.STILLROOM_PAIR_URL, ca: await readFile(process.env.STILLROOM_PAIR_CA, 'utf8'), iceServers: [] };
   client = await ChatClient.create({ store, url: settings.url, ca: settings.ca || undefined });
   if (process.argv.includes('--smoke-pair')) {
     const directory = process.env.STILLROOM_PAIR_DIRECTORY;
@@ -104,6 +104,13 @@ try {
       if (bytes.length > 65536 || !bytes.toString().includes('-----BEGIN CERTIFICATE-----') || bytes.toString().includes('PRIVATE KEY')) throw new Error('Invalid certificate');
       settings.ca = bytes.toString(); return true;
     });
+    handle('ca-system', async () => {
+      const previous = settings.ca;
+      settings.ca = null;
+      try { await store.save(fullStore.client); }
+      catch (error) { settings.ca = previous; throw error; }
+      return publicState();
+    });
     handle('connect', async url => {
       if (typeof url !== 'string' || url.length > 2048) throw new Error('Invalid relay');
       const parsed = new URL(url);
@@ -122,7 +129,7 @@ try {
     });
     handle('retry', async id => { if (typeof id !== 'string' || id.length > 128) throw new Error('Invalid message'); await client.retry(id); return publicState(); });
     client.subscribe(() => win?.webContents.send('changed', publicState()));
-    features = await installFeatures({ win, page, profileDirectory: app.getPath('userData'), getClient: () => client, handle, changed: () => { if (!win.isDestroyed()) win.webContents.send('changed', publicState()); }, testOptions: process.argv.includes('--smoke-features') ? { source: process.env.STILLROOM_FEATURE_SOURCE, destination: process.env.STILLROOM_FEATURE_DESTINATION } : null, getSettings: () => settings, saveSettings: () => store.save(fullStore.client) });
+    features = await installFeatures({ win, page, profileDirectory: app.getPath('userData'), getClient: () => client, handle, changed: () => { if (!win.isDestroyed()) win.webContents.send('changed', publicState()); }, testOptions: process.argv.includes('--smoke-features') ? { source: process.env.STILLROOM_FEATURE_SOURCE, destination: process.env.STILLROOM_FEATURE_DESTINATION, report: process.env.STILLROOM_FEATURE_REPORT } : null, getSettings: () => settings, saveSettings: () => store.save(fullStore.client) });
     await win.loadFile(path.join(here, 'index.html'));
     if (process.argv.includes('--smoke-features')) { const { runFeatureSmoke } = await import('./features-smoke.js'); const result = await runFeatureSmoke({ win, getClient: () => client, settings }); await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, JSON.stringify(result)); await features.close(); await client.disconnect(); app.exit(result.success ? 0 : 1); return; }
     if (process.argv.includes('--smoke-ui-pair')) {

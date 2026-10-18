@@ -23,6 +23,9 @@ export async function runFeatureSmoke({ win, getClient, settings }) {
   const peerMarker = name => wait(async () => { try { return await readFile(path.join(directory, peerRole + '-' + name), 'utf8'); } catch { return false; } }, name);
   const ui = expression => js(`Boolean(${expression})`);
   try {
+    // A hidden test window is not a native capture target. Show only this owned
+    // synthetic test UI, never select a display or another application's window.
+    if (!relayOnly && !skipSharing) win.showInactive();
     await wait(() => ui(`document.getElementById('sendFile') && typeof window.stillroom.call === 'function'`), 'renderer initialization');
     const cardPath = path.join(directory, role + '.card');
     await writeFile(cardPath + '.tmp', JSON.stringify(getClient().contactCard())); await rename(cardPath + '.tmp', cardPath);
@@ -73,7 +76,8 @@ export async function runFeatureSmoke({ win, getClient, settings }) {
         if (skipSharing) throw Error('Screen sharing explicitly skipped by test operator');
         await click('shareScreen');
         await wait(() => ui(`document.getElementById('shareDialog').open`), 'capture picker', 3000);
-        const source = await js(`[...document.getElementById('shareSource').options].find(o => o.value.startsWith('window:') && /Stillroom/.test(o.textContent))?.value || null`);
+        const ownSourceId = win.getMediaSourceId();
+        const source = await js(`[...document.getElementById('shareSource').options].find(o => o.value === ${JSON.stringify(ownSourceId)})?.value || null`);
         if (!source) throw Error('Own Stillroom window unavailable in capture picker');
         await js(`document.getElementById('shareSource').value=${JSON.stringify(source)}; document.getElementById('systemAudio').checked=false;`);
         await click('startShare');
@@ -105,8 +109,15 @@ export async function runFeatureSmoke({ win, getClient, settings }) {
       await marker('observed'); await peerMarker('share-finished'); await marker('ready-end');
     }
     await wait(() => ui(`document.getElementById('callPanel').hidden`), 'call ended'); result.hangup = true;
+    await wait(() => ui(`!document.getElementById('exportStreamReport').disabled`), 'retained performance report');
+    await click('exportStreamReport');
+    const report = await wait(async () => { try { return JSON.parse(await readFile(path.join(directory, role + '-stream.json'), 'utf8')); } catch { return false; } }, 'saved performance report');
+    result.performanceReport = report.format === 'stillroom-stream-report-v1' && report.samples.length > 0 && !JSON.stringify(report).includes(peer.id);
+    await click('systemCA');
+    await wait(async () => { const r = await js(`window.stillroom.call('state')`); return r.value?.settings?.customCA === false; }, 'system certificate trust');
+    result.systemTrustReset = true;
     result.transferTransport = (await js(`window.stillroom.call('state')`)).value?.transferTransport;
-    result.success = result.connected && result.mute && result.file && result.hangup && (role === 'a' || result.incomingConsent);
+    result.success = result.connected && result.mute && result.file && result.hangup && result.performanceReport && result.systemTrustReset && (role === 'a' || result.incomingConsent);
     // Unavailable capture is not successful screen-sharing verification.
     result.sharing.skipped = skipSharing;
     if (!skipSharing && !result.sharing.passed) result.success = false;

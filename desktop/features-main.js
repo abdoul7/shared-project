@@ -44,8 +44,16 @@ export async function installFeatures({ win, page, profileDirectory, getClient, 
     });
   }
   bind(getClient());
+  handle('media-report', async report => {
+    if (!report || report.format !== 'stillroom-stream-report-v1' || !Array.isArray(report.samples) || report.samples.length > 600) throw Error('Invalid stream report');
+    const data = JSON.stringify(report, null, 2);
+    if (Buffer.byteLength(data) > 2 * 1024 * 1024) throw Error('Stream report too large');
+    const result = testOptions?.report ? { canceled: false, filePath: testOptions.report } : await dialog.showSaveDialog(win, { title: 'Save stream performance report', defaultPath: 'stillroom-stream-report.json', filters: [{ name: 'JSON report', extensions: ['json'] }], properties: ['showOverwriteConfirmation'] });
+    if (result.canceled) return false;
+    await writeFile(result.filePath, data, { encoding: 'utf8', mode: 0o600 }); return true;
+  });
   handle('rtc-send', async (peer, data) => { await getClient().sendControl(peer, 'rtc', data); return true; }, true);
-  handle('rtc-config', () => ({ iceServers: getSettings().iceServers || [] }));
+  handle('rtc-config', () => ({ iceServers: getSettings().iceServers ?? [{ urls: 'stun:stun.cloudflare.com:3478' }] }));
   handle('rtc-settings', async raw => {
     if (typeof raw !== 'string' || raw.length > 12000) throw Error('Invalid ICE configuration');
     const servers = JSON.parse(raw);

@@ -33,8 +33,9 @@ its shared test certificate, existing LAN services, files, or development server
 ## Both desktops
 
 Use the **same current WSS URL** in Connection settings. Keep normal certificate
-verification. Existing profiles with a private localhost CA can use a fresh profile
-for this public-certificate trial; do not delete old identities/history:
+verification. Existing profiles with a private localhost CA can choose **Use system
+certificate authorities**, then Connect, preserving their identity and history.
+Alternatively, use an independent fresh trial profile; do not delete old profiles:
 
 ```powershell
 $env:STILLROOM_PROFILE = 'cloudflare-trial'
@@ -65,3 +66,8 @@ server. Separate direct WebRTC connectivity or a configured TURN server is still
 needed for calls. A tunnel alone does not establish 1440p60 or unlimited provider
 bandwidth. Prefer direct file transport when available. Do not bulk-benchmark the
 public tunnel without checking the provider's applicable usage terms.
+
+The app now defaults to public Cloudflare STUN discovery for direct media routing.
+Existing explicitly saved connectivity settings are preserved. See the
+[two-PC test procedure](STREAMING_TEST.md) for both sharing directions and saved
+receiver measurements.

@@ -1,0 +1,20 @@
+{
+  "packagedStartup": {
+    "smokeUI": true,
+    "title": "Stillroom",
+    "bridge": true,
+    "node": "undefined",
+    "contacts": true,
+    "composer": true,
+    "sandbox": true,
+    "contextIsolation": true,
+    "nodeIntegration": false
+  },
+  "featureReceipt": "verification/streaming-packaged-features.json",
+  "twoPhysicalPcsTested": false,
+  "archiveSha256": "f1a7c9c08089ec6a0d3424c53b0a5c25283eedba3ec9add2d095d27b11e98eeb",
+  "appAsarSha256": "fa4bf24fa4f86009213427e9d6041be391a24c0406d0ed96c838504fe96cb93f",
+  "unsignedDevelopmentBuild": true,
+  "archiveBytes": 163778179,
+  "archiveName": "Stillroom-stream-test-20261018.zip"
+}

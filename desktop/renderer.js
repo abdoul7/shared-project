@@ -53,6 +53,7 @@ $('approve').onclick = async () => {
 $('copy').onclick = async () => { if (await call('card')) notice('Public contact card copied. Exchange it through an authenticated channel.'); };
 $('settingsButton').onclick = () => { $('url').value = state.settings.url; $('caStatus').textContent = state.settings.customCA ? 'Private CA configured' : 'Using system certificate authorities'; $('settingsDialog').showModal(); };
 $('chooseCA').onclick = async () => { if (await call('ca')) $('caStatus').textContent = 'Private CA selected; applies on Connect'; };
+$('systemCA').onclick = async () => { const next = await call('ca-system'); if (next) { render(next); $('caStatus').textContent = 'System certificate authorities selected; applies on Connect'; } };
 $('connect').onclick = async () => { const next = await call('connect', $('url').value); if (next) { render(next); $('settingsDialog').close(); } };
 $('disconnect').onclick = async () => { const next = await call('disconnect'); if (next) render(next); };
 $('compose').onsubmit = async event => {

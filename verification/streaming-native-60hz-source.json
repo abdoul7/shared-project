@@ -1,0 +1,55 @@
+{
+  "success": true,
+  "testOnly": true,
+  "source": "native capture of exact owned animated 2560x1440 test window",
+  "network": "same host peer WebRTC; authenticated E2EE signalling over local validated TLS relay; no TURN",
+  "hardware": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "memoryBytes": 33190932480
+  },
+  "checks": {
+    "noMicBeforeAcceptance": true,
+    "audioReceived": true,
+    "muteAndUnmute": true,
+    "directData": true,
+    "tracksStopped": true
+  },
+  "requested": {
+    "width": 2560,
+    "height": 1440,
+    "fps": 60
+  },
+  "durationSeconds": 65.01560302734374,
+  "receiverAverageFps": 59.893315122560544,
+  "sustained": {
+    "direction": "incoming",
+    "durationSeconds": 60.90512890625,
+    "frames": 3648,
+    "averageFps": 59.89643344512562,
+    "width": 2560,
+    "height": 1440,
+    "stable1440p": true,
+    "droppedFrames": 0,
+    "freezes": 0,
+    "bitrateBps": 825941.2122324212,
+    "targetMet": false,
+    "target": {
+      "width": 2560,
+      "height": 1440,
+      "nominalFps": 60,
+      "minimumMeasuredFps": 59.9,
+      "requiredSeconds": 60
+    },
+    "reason": "Frame rate, drops or freezes missed the target"
+  },
+  "meets1440p60": false,
+  "direction": "first client to second",
+  "limitations": [
+    "Native test-window capture is not arbitrary game/display capture.",
+    "Local host is not two physical computers or an external network.",
+    "No independent security audit or 1440p60 guarantee."
+  ]
+}

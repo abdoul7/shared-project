@@ -20,6 +20,28 @@ function fixture(sendControl = async () => {}) {
   return rtc;
 }
 
+test('answerer attaches microphone and later screen to remotely negotiated slots', async () => {
+  const rtc = fixture(), mic = track('audio'), attached = [];
+  const slots = ['audio', 'video', 'audio'].map((kind, i) => ({ receiver: { track: { kind } }, sender: { async replaceTrack(value) { attached.push([i, value]); } } }));
+  Object.assign(rtc.pc, { async setRemoteDescription() {}, getTransceivers: () => slots, async createAnswer() { return {}; }, async setLocalDescription() {}, localDescription: { toJSON: () => ({ type: 'answer' }) } });
+  rtc.phase = 'ringing'; rtc.mic = async () => new Stream([mic]); rtc.flushIce = async () => {}; rtc.gather = async () => {};
+  await rtc.accept();
+  assert.equal(rtc.video, slots[1]); assert.equal(rtc.system, slots[2]);
+  assert.deepEqual(attached, [[0, mic]]); assert.ok(slots.every(s => s.direction === 'sendrecv'));
+  rtc.cleanup();
+});
+
+test('acceptance finishing after hangup cannot modify the next call', async () => {
+  const rtc = fixture(), remote = deferred(), mic = track('audio');
+  rtc.phase = 'ringing'; rtc.mic = async () => new Stream([mic]);
+  rtc.pc.setRemoteDescription = () => remote.promise;
+  const accepting = rtc.accept(); await new Promise(resolve => setImmediate(resolve));
+  await rtc.hangup(); const next = fixture(); rtc.pc = next.pc; rtc.callId = 'next-call'; rtc.phase = 'connected';
+  remote.resolve(); await assert.rejects(accepting, /Call changed/);
+  assert.equal(rtc.pc, next.pc); assert.equal(rtc.callId, 'next-call'); assert.equal(mic.stopped, true);
+  rtc.cleanup();
+});
+
 test('hangup stops all capture before waiting for signalling and preserves end identity', async () => {
   const signal = deferred(), sent = [];
   const rtc = fixture((...args) => { sent.push(args); return signal.promise; });

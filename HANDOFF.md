@@ -8,7 +8,7 @@ Read this file before making changes. Update it with every push so the next cont
 
 Latest connection route: Cloudflare Quick Tunnel is running locally and public WSS delivery was verified with two synthetic clients. Read docs/CLOUDFLARE_RELAY.md and local `.local/cloudflare-relay.json` for the current temporary address. Render was blocked by card verification and was not deployed. No VPN is used.
 
-Verified here: regression suite, independent test desktop clients with synthetic audio and direct/relay file transfers, synthetic 1440p video, Windows packaging and packaged renderer isolation. Own-window native screen capture is unavailable in this execution context and the strict test correctly fails instead of claiming success. Native devices, cross-PC routing and 1440p60 remain unverified. No forward secrecy or independent security audit. See portable receipts under `verification/`.
+Verified here: 35 regression tests pass (1 opt-in skipped), strict native own-window sharing passes in two independent production test windows, direct/relay files and Windows renderer isolation. The previous unavailable-capture finding is superseded by showing the exact owned test window. Streaming diagnostics/report export, default Cloudflare STUN and system-certificate reset are implemented. Local native owned-window 1440p tests now pass the full-minute nominal-60 target in both directions: rolling averages 59.9369fps and 59.9914fps, zero reported drops/freezes. The source requests 120Hz motion to supply 60fps capture; this is a controlled low-entropy scene, not arbitrary games. Friend is unavailable; the prepared complete-folder ZIP is .local/Stillroom-stream-test-20261018.zip and the guide is docs/STREAMING_TEST.md. Native microphones/system audio and two-physical-PC routing/performance remain unverified. No forward secrecy or independent security audit. See verification/streaming-*.json and the newest docs/HANDOFF.md section.
 
 Broad GitHub CLI authorization was blocked by automatic approval review; user declined those permissions and requested local checkpoints. The latest user instruction authorizes pushing the feature branch, but not broad CLI permissions or automatic merges. Ordinary Git fetch did complete; preserve remote main's two starter commits in the portable bundle.
 
@@ -24,10 +24,18 @@ Broad GitHub CLI authorization was blocked by automatic approval review; user de
 ## Next steps
 
 1. Use the running Cloudflare Quick Tunnel for physical two-PC validation; see docs/CLOUDFLARE_RELAY.md. Render was blocked by card verification. The user explicitly declined Tailscale; do not install it.
-2. Verify two physical PCs, reconnect, real microphones, explicit native screen/system-audio capture and file resume. Measure actual receiver performance; 60fps is not established.
+2. Verify two physical PCs, reconnect, real microphones, explicit native screen/system-audio capture and file resume. Measure actual receiver performance; two-PC 60fps is not established.
 3. Address protocol/key-lifecycle and storage limitations; private groups require a reviewed group-key design. Never automatically merge unrelated main/feature histories.
 
 ## Update history
+
+### 2026-10-18 — Prepare measured streaming build
+
+- Fixed answerer media negotiation and late acceptance after hangup; added rolling one-minute performance measurements and report export, default STUN and certificate trust reset.
+- Native own-window feature smoke now passes. Unit/integration suite: 35 passed, 1 opt-in skipped. Full details and two-PC procedure: docs/HANDOFF.md and docs/STREAMING_TEST.md.
+- Native owned-window streaming passed both local directions for over 60s: 59.9369/59.9914fps, zero reported drops/freezes. Windows build, packaged startup, packaged two-client feature test and ZIP inventory passed. Receipts: verification/streaming-*.json. ZIP: .local/Stillroom-stream-test-20261018.zip (ignored, not uploaded).
+- Friend is unavailable; the user asked to keep improving and prepare the build. Two-physical-PC streaming remains an open gate; do not mark the goal complete.
+
 
 ### 2026-10-18 — Cloudflare relay running after Render card gate
 

@@ -43,7 +43,7 @@ The shared localhost TLS fixture/key is intentionally public test data, **never 
 
 For a hosted test relay with no VPN on either PC, see
 [the free hosted-relay instructions](docs/HOSTED_RELAY.md) and `render.yaml`.
-Configuration is prepared; no public service has been created or deployed.
+Render configuration is prepared but undeployed. The current Cloudflare route runs a temporary public tunnel to a relay on the host PC.
 
 Current choice: [Cloudflare Quick Tunnel](docs/CLOUDFLARE_RELAY.md), after Render
 required a payment card. Run `npm run relay:cloudflare` on the host PC and share
@@ -65,6 +65,11 @@ Both desktops use the exact same public URL. Use system trust for public certifi
 Only the relay's TLS private key belongs on the server; client identity private keys stay in encrypted desktop profiles. The relay sees routing metadata and ciphertext, not message contents. It currently keeps no offline mailbox. A sender must reconnect when the recipient is online to finish delivery; an encrypted durable outbox retries automatically. Disconnect/reconnect or restart either profile to exercise recovery. Do not run two instances of the same profile.
 
 ## Build and verification
+
+For the prepared two-PC test build, follow [the streaming test procedure](docs/STREAMING_TEST.md).
+The app shows a rolling minute of receiver measurements and can save a report
+during or after a call. Default Cloudflare STUN helps direct network discovery;
+networks that prevent direct calls may still require separately configured TURN.
 
 Accept an incoming voice call before sharing a selected screen/window. Mute and
 hangup controls stop local capture; screen sharing has a separate explicit picker
