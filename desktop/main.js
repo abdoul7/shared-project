@@ -4,13 +4,18 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { ChatClient } from '../core/client.js';
+import { installFeatures } from './features-main.js';
 
+if (process.argv.includes('--smoke-features')) { app.commandLine.appendSwitch('use-fake-device-for-media-stream'); app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required'); }
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
 const here = path.dirname(fileURLToPath(import.meta.url));
 const page = pathToFileURL(path.join(here, 'index.html')).href;
 const profile = process.env.STILLROOM_PROFILE || 'default';
 if (!/^[a-zA-Z0-9_-]{1,60}$/.test(profile)) throw new Error('Invalid profile name');
 app.setPath('userData', path.join(app.getPath('appData'), 'Stillroom', profile));
 if (!app.requestSingleInstanceLock()) app.exit(0);
+let features;
 let win, client, settings = { url: 'wss://localhost:8443', ca: null };
 const snapshot = path.join(app.getPath('userData'), 'snapshot.enc');
 let fullStore = null;
@@ -28,16 +33,16 @@ const store = {
     return saves;
   }
 };
-function publicState() { const state = client.state(); return { ...state, outbox: state.outbox.map(({id,peerId}) => ({id,peerId})), settings: { url: settings.url, customCA: !!settings.ca }, profile }; }
+function publicState() { const state = client.state(); return { ...state, ...features?.state(), outbox: state.outbox.map(({id,peerId}) => ({id,peerId})), settings: { url: settings.url, customCA: !!settings.ca }, profile }; }
 function trusted(event) {
   if (!win || event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame || event.senderFrame.url !== page) throw new Error('Untrusted request');
 }
 let actions = Promise.resolve();
-function handle(name, action) {
+function handle(name, action, concurrent = false) {
   ipcMain.handle(name, async (event, ...args) => {
     trusted(event);
-    const work = actions.then(() => action(...args));
-    actions = work.catch(() => {});
+    const work = concurrent ? Promise.resolve().then(() => action(...args)) : actions.then(() => action(...args));
+    if (!concurrent) actions = work.catch(() => {});
     try { return { ok: true, value: await work }; }
     catch { return { ok: false, error: 'Action failed. Check the relay, contact card, or local storage and try again.' }; }
   });
@@ -48,7 +53,7 @@ try {
   await mkdir(app.getPath('userData'), { recursive: true });
   try { fullStore = JSON.parse(safeStorage.decryptString(await readFile(snapshot))); settings = fullStore.settings; }
   catch (e) { if (e.code !== 'ENOENT') throw new Error('Encrypted profile cannot be opened'); }
-  if (process.argv.includes('--smoke-pair') || process.argv.includes('--smoke-ui-pair')) settings = { url: process.env.STILLROOM_PAIR_URL, ca: await readFile(process.env.STILLROOM_PAIR_CA, 'utf8') };
+  if (process.argv.includes('--smoke-pair') || process.argv.includes('--smoke-ui-pair') || process.argv.includes('--smoke-features')) settings = { url: process.env.STILLROOM_PAIR_URL, ca: await readFile(process.env.STILLROOM_PAIR_CA, 'utf8') };
   client = await ChatClient.create({ store, url: settings.url, ca: settings.ca || undefined });
   if (process.argv.includes('--smoke-pair')) {
     const directory = process.env.STILLROOM_PAIR_DIRECTORY;
@@ -80,7 +85,7 @@ try {
     app.exit(storage ? 0 : 1);
   } else {
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
-    win = new BrowserWindow({ width: 1120, height: 780, minWidth: 840, minHeight: 600, title: 'Stillroom', backgroundColor: '#f5f4f0', webPreferences: { preload: path.join(here, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true } });
+    win = new BrowserWindow({ width: 1120, height: 780, minWidth: 840, minHeight: 600, title: 'Stillroom', backgroundColor: '#f5f4f0', webPreferences: { backgroundThrottling: false, preload: path.join(here, 'preload.cjs'), contextIsolation: true, sandbox: true, nodeIntegration: false, webSecurity: true } });
     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     win.webContents.on('will-navigate', event => event.preventDefault());
     win.webContents.on('will-attach-webview', event => event.preventDefault());
@@ -106,6 +111,7 @@ try {
       await client.disconnect(); settings.url = parsed.href;
       await store.save(fullStore?.client);
       client = await ChatClient.create({ store, url: settings.url, ca: settings.ca || undefined });
+      features?.bind(client);
       client.subscribe(() => win?.webContents.send('changed', publicState()));
       await client.connect(); return publicState();
     });
@@ -116,7 +122,9 @@ try {
     });
     handle('retry', async id => { if (typeof id !== 'string' || id.length > 128) throw new Error('Invalid message'); await client.retry(id); return publicState(); });
     client.subscribe(() => win?.webContents.send('changed', publicState()));
+    features = await installFeatures({ win, page, profileDirectory: app.getPath('userData'), getClient: () => client, handle, changed: () => { if (!win.isDestroyed()) win.webContents.send('changed', publicState()); }, testOptions: process.argv.includes('--smoke-features') ? { source: process.env.STILLROOM_FEATURE_SOURCE, destination: process.env.STILLROOM_FEATURE_DESTINATION } : null, getSettings: () => settings, saveSettings: () => store.save(fullStore.client) });
     await win.loadFile(path.join(here, 'index.html'));
+    if (process.argv.includes('--smoke-features')) { const { runFeatureSmoke } = await import('./features-smoke.js'); const result = await runFeatureSmoke({ win, getClient: () => client, settings }); await writeFile(process.env.STILLROOM_SMOKE_OUTPUT, JSON.stringify(result)); await features.close(); await client.disconnect(); app.exit(result.success ? 0 : 1); return; }
     if (process.argv.includes('--smoke-ui-pair')) {
       await delay(800);
       const directory = process.env.STILLROOM_PAIR_DIRECTORY, role = process.env.STILLROOM_PAIR_ROLE;
@@ -162,4 +170,4 @@ try {
   app.exit(1);
 }
 });
-app.on('window-all-closed', () => { client?.disconnect(); app.quit(); });
+app.on('window-all-closed', async () => { await features?.close(); await client?.disconnect(); app.quit(); });

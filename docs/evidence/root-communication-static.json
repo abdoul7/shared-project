@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-19",
+  "artifact": {
+    "relativeReference": "Root/current/Root.exe",
+    "bytes": 318703968,
+    "sha256": "01721f78fe70adcc5c9d82853597025c292763ff996745b5a3c27fe2ddb3b5e1"
+  },
+  "selectedModule": {
+    "start": 134945675,
+    "endExclusive": 139363107,
+    "bytes": 4417432,
+    "sha256": "a8a562f322845e193770e61bbb2281fe1cde4e0891cfe1b70f49a52114d6f82c"
+  },
+  "sourceContexts": [
+    {
+      "literal": "async getScreenInput(",
+      "jsCharacterOffset": 4069625,
+      "rootByteOffset": 139015553,
+      "contextSha256": "9b6411b955a79e0a8134a905a487e11c8bcad6c9e8d8bae76edf844c94717f0a",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "setScreenPublishParameters=",
+      "jsCharacterOffset": 2360974,
+      "rootByteOffset": 137306878,
+      "contextSha256": "0a5125ba0f4e63d972dafa9b7a94dce62c642a5e75bf9503655057d314fdb714",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "async gatherDiagnostics(",
+      "jsCharacterOffset": 4125031,
+      "rootByteOffset": 139070967,
+      "contextSha256": "ec6f46b11b5f395898c95b52175b6f397d210eef494b35584aed4e707c4a2eb3",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "getNativeLoopbackAudioTrack(){",
+      "jsCharacterOffset": 4124833,
+      "rootByteOffset": 139070769,
+      "contextSha256": "faab0c7d1912d116cea4d0d1638cb92927b098f481f436c05d6b07755138543a",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "preferredBackend===",
+      "jsCharacterOffset": 2395541,
+      "rootByteOffset": 137341461,
+      "contextSha256": "51ada89e6bb31c3d73125815590c97b2bda65e767cd193406397fe215490daac",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "async getAudioInput(",
+      "jsCharacterOffset": 4069349,
+      "rootByteOffset": 139015277,
+      "contextSha256": "b40db13b163aa4c16bfa0a3cfc4cd7135f4927ecd1c181b824db628219744c54",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "onDisconnected=e=>",
+      "jsCharacterOffset": 2375129,
+      "rootByteOffset": 137321045,
+      "contextSha256": "4bbee75dab0e92e6dfa2a079f1926a5448694668517118af6ce7183b997941d1",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "new RTCPeerConnection(",
+      "jsCharacterOffset": 2059066,
+      "rootByteOffset": 137004968,
+      "contextSha256": "4d19cf9bb462bcfa54bbce32e4887fe410888c77972a6a510a30bbd6762c4f24",
+      "observationType": "manual-inert-source-context",
+      "runtimeObserved": false
+    }
+  ],
+  "namedConcepts": [
+    {
+      "literal": "DirectMessageMessageCreated",
+      "firstRootByteOffset": 64446347,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "DirectMessageMessageEdited",
+      "firstRootByteOffset": 64446387,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "DirectMessageMessageDeleted",
+      "firstRootByteOffset": 64446426,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "DirectMessageMessageSetTypingIndicator",
+      "firstRootByteOffset": 64446466,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "DirectMessageMessageSetViewTime",
+      "firstRootByteOffset": 64446517,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "FileUploadRepository",
+      "firstRootByteOffset": 63487052,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "UploadFileAsync",
+      "firstRootByteOffset": 65175450,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "updateUploadProgress",
+      "firstRootByteOffset": 65255901,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "FileDownloadResponse",
+      "firstRootByteOffset": 64541460,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "NativeToWebRtcBridge",
+      "firstRootByteOffset": 63734597,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    },
+    {
+      "literal": "WebRtcToNativeBridge",
+      "firstRootByteOffset": 63734849,
+      "observationType": "readable-name-only",
+      "runtimeObserved": false
+    }
+  ],
+  "rea": {
+    "managedInspection": "Rejected by 128 MiB snapshot budget; source 318703968 bytes",
+    "javascriptParentEvidence": "ev_7a72565ec10992617232234d9987b31de8ac0682533216ad05ebb6c2756ba918",
+    "javascriptCoverage": "partial; worker heap exhausted; zero parsed files/findings"
+  },
+  "limits": [
+    "No runtime target execution, accounts, private data or traffic inspected",
+    "No source bodies copied into tracked evidence",
+    "Offsets bind only to exact SHA-256",
+    "Names alone do not establish executed behavior"
+  ]
+}

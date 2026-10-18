@@ -1,3 +1,5 @@
+import { mountFeatures } from './features-renderer.js';
+let featureUI;
 const $ = id => document.getElementById(id);
 let state, selected;
 async function call(action, ...args) {
@@ -10,6 +12,7 @@ function element(tag, text, className) { const node = document.createElement(tag
 function short(id) { return id.slice(0, 8) + '…' + id.slice(-6); }
 function render(next) {
   state = next;
+  featureUI?.update(next);
   if (!selected && state.contacts.length) selected = state.contacts[0].id;
   $('status').textContent = state.connected ? '● Connected' : '○ Disconnected';
   $('status').className = state.connected ? 'online' : '';
@@ -61,3 +64,6 @@ $('compose').onsubmit = async event => {
 $('text').onkeydown = event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); $('compose').requestSubmit(); } };
 window.stillroom.subscribe(render);
 const initial = await call('state'); if (initial) render(initial);
+
+featureUI = await mountFeatures({getSelected:()=>selected,notice});
+featureUI.update(state);
