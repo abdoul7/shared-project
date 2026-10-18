@@ -8,6 +8,7 @@ Stillroom is an original Windows-first private desktop communication application
 
 - Repository: https://github.com/abdoul7/shared-project (private).
 - Feature branch: codex/stillroom-encrypted-dm.
+- Verified implementation checkpoint: 1a711cf2792702c22fceccbe9d6e8763050a22b4. Later documentation-only commits may record this identity; resolve the final bundle tip with git rev-parse HEAD.
 - Initial local implementation checkpoint: a0c433c (resolve full SHA with git log); later verification/handoff commits follow. Current checkpoint: `git rev-parse HEAD` (a file cannot contain its own commit hash).
 - Remote main at last fetch: 49354749837a88308e487bab68d08401785a595f; previous: c62946fa8e4c9b45020caf89ff1eb87591cb8318. Remote tree contains only .gitignore, README, AGENTS and HANDOFF. Browser showed zero open and zero closed PRs. No other application work found.
 - Local checkout initially had no history; first source checkpoint was saved before Git fetch completed. Both local checkpoint history and remote starter history are preserved as separate refs in the portable bundle after comparison of all four starter files. They have unrelated roots and have NOT been merged; the user instructed no automatic merges. Future integration requires an explicitly authorized history reconciliation. No remote history is rewritten.
