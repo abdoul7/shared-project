@@ -6,6 +6,8 @@ Read this file before making changes. Update it with every push so the next cont
 
 **Continued from the friend's pushed WIP checkpoint `4dfa6c3`.** Messaging, direct calls/sharing and resumable encrypted files are implemented experimentally; private groups remain absent. This continuation hardens capture cleanup, adds accurate desktop verification gates, and prepares a free hosted relay without a VPN. Read [docs/HANDOFF.md](docs/HANDOFF.md) for the current evidence and next steps. Earlier entries use the previous contributor's timezone.
 
+Latest connection route: Cloudflare Quick Tunnel is running locally and public WSS delivery was verified with two synthetic clients. Read docs/CLOUDFLARE_RELAY.md and local `.local/cloudflare-relay.json` for the current temporary address. Render was blocked by card verification and was not deployed. No VPN is used.
+
 Verified here: regression suite, independent test desktop clients with synthetic audio and direct/relay file transfers, synthetic 1440p video, Windows packaging and packaged renderer isolation. Own-window native screen capture is unavailable in this execution context and the strict test correctly fails instead of claiming success. Native devices, cross-PC routing and 1440p60 remain unverified. No forward secrecy or independent security audit. See portable receipts under `verification/`.
 
 Broad GitHub CLI authorization was blocked by automatic approval review; user declined those permissions and requested local checkpoints. The latest user instruction authorizes pushing the feature branch, but not broad CLI permissions or automatic merges. Ordinary Git fetch did complete; preserve remote main's two starter commits in the portable bundle.
@@ -21,11 +23,18 @@ Broad GitHub CLI authorization was blocked by automatic approval review; user de
 
 ## Next steps
 
-1. Deploy the prepared free Render relay only after the user selects/authorizes hosting; see docs/HOSTED_RELAY.md. The user explicitly declined Tailscale; do not install it.
+1. Use the running Cloudflare Quick Tunnel for physical two-PC validation; see docs/CLOUDFLARE_RELAY.md. Render was blocked by card verification. The user explicitly declined Tailscale; do not install it.
 2. Verify two physical PCs, reconnect, real microphones, explicit native screen/system-audio capture and file resume. Measure actual receiver performance; 60fps is not established.
 3. Address protocol/key-lifecycle and storage limitations; private groups require a reviewed group-key design. Never automatically merge unrelated main/feature histories.
 
 ## Update history
+
+### 2026-10-18 — Cloudflare relay running after Render card gate
+
+- User approved deployment, but Render demanded card verification despite Free selection. No card submitted and no Render service deployed. User then explicitly chose Cloudflare.
+- Added scripts/cloudflare-relay.mjs (`npm run relay:cloudflare`) and docs/CLOUDFLARE_RELAY.md. Official cloudflared 2026.10.1 binary verified by release SHA-256, saved only in ignored .local/tools. Started the connector and a loopback-only relay; runtime address/PIDs are in ignored .local/cloudflare-relay.json.
+- Actual public WSS test passed with normal certificate validation: two temporary synthetic clients authenticated, approved each other, and confirmed encrypted message delivery in both directions. Receipt: verification/cloudflare-transport.json. This is external transport from one PC, not a second-physical-PC/media test.
+- Quick Tunnel hostname changes on restart; keep the host awake. No VPN, Cloudflare account, domain, router rule or payment card configured. Share current runtime URL manually with friend; never commit live profiles/keys. Existing encryption and media limitations remain.
 
 ### 2026-10-18 — Continue media/file WIP and prepare VPN-free hosting
 

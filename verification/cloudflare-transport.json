@@ -1,0 +1,16 @@
+{
+  "success": true,
+  "date": "2026-10-18",
+  "transport": "Cloudflare Quick Tunnel public WSS",
+  "normalCertificateValidation": true,
+  "independentSyntheticClients": 2,
+  "authenticatedPeerReceipts": [
+    true,
+    true
+  ],
+  "limitations": [
+    "Both clients ran on the same PC but used the external Cloudflare endpoint.",
+    "Not a separate-computer, video, or throughput test.",
+    "No personal messages or reference accounts used."
+  ]
+}

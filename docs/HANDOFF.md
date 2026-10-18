@@ -6,6 +6,14 @@ Stillroom is an original Windows-first private desktop communication application
 
 ## CURRENT — continuation on 2026-10-18 (America/Toronto)
 
+### Latest network setup — Cloudflare
+
+The user approved the Free Render deploy but Render required a payment card; none was submitted and no Render service exists. User selected Cloudflare instead. An official, SHA-256-verified cloudflared 2026.10.1 connector is in ignored `.local/tools/cloudflared.exe`. `npm run relay:cloudflare` is the repeatable host launcher. See docs/CLOUDFLARE_RELAY.md.
+
+The Quick Tunnel and loopback-only Node relay were started on this PC. Current address, start time and exact owned PIDs are in `.local/cloudflare-relay.json` (local runtime data, not committed). Check status/processes before starting another copy. Public WSS validation passed with normal system certificate trust and two synthetic clients exchanging peer-confirmed encrypted messages in both directions; portable receipt is verification/cloudflare-transport.json. This traversed the real Cloudflare endpoint from one PC, not two physical computers. The friend needs only the same current WSS URL and mutually verified public cards, not a connector/VPN. No media-connectivity claim follows from this result.
+
+Keep the host awake. The address changes on connector restart. Render instructions/config remain as an alternative, not the chosen route. No payment, Cloudflare account, persistent tunnel/domain or firewall modifications occurred. Stillroom's static-key and unfinished-group limitations are unchanged.
+
 - Resumed the friend's pushed WIP `4dfa6c3` by clean fast-forward on `codex/stillroom-encrypted-dm`. Earlier dates use the original contributor's timezone. No history reconciliation or merge with main occurred.
 - Inherited experimental direct voice, screen selection/system-audio option, real receiver statistics, authenticated control envelopes and resumable encrypted 16KiB file transfers. Private groups still do not exist.
 - Fixed local capture stopping immediately on hangup, even while signalling stalls. Stop-sharing releases tracks before asynchronous sender operations. Failed attachment and late microphone/capture completion cannot retain capture or attach it to another call. Five focused regression tests cover these cases.
@@ -28,7 +36,7 @@ Stillroom is an original Windows-first private desktop communication application
 
 Use `npm ci` (and Electron's install script if binary missing); `scripts/dev-relay.ps1` starts the loopback-only local TLS test service. For real remote testing, use docs/HOSTED_RELAY.md and the actual deployed WSS URL. No service URL exists yet. Do not install Tailscale. Do not use the shared localhost certificate remotely.
 
-1. The user must choose/sign into the hosting account and authorize a Free service before deployment. Review provider bandwidth/cold-start limits; do not promise unlimited free infrastructure. Both desktops must be online; there is no server mailbox.
+1. Current route is the running Cloudflare Quick Tunnel. Use its current runtime URL for two-PC testing; no cloud hosting account is needed. Render remains undeployed behind its card-verification requirement. Both desktops must be online; there is no server mailbox.
 2. Perform real two-PC messaging and media tests. Native capture is blocked/unavailable only in this test context; investigate on the interactive desktop without broadening capture to the user's personal screen. Configure separate TURN only if direct connectivity requires it.
 3. Continue measured media reliability and file throughput, then reviewed group-key/membership design. Static-key DM/control forward secrecy, encrypted snapshot scalability, safe publication on non-hard-link filesystems, identity recovery and independent security review remain open.
 

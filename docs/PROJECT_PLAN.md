@@ -43,6 +43,6 @@ The previous starter repo had no application or stack. This request supersedes t
 
 ## Checkpoint policy
 
-Current network choice: no Tailscale/VPN. Prepared Free Render relay deployment is in docs/HOSTED_RELAY.md; account authorization/deployment and two-PC validation remain open. The provider's infrastructure limits are separate from the app's no-artificial-file-cap requirement. Current measurements live in docs/HANDOFF.md and verification/; neither 1440p60 nor complete product readiness has been established.
+Current network choice: no Tailscale/VPN. User switched to Cloudflare Quick Tunnel after Render required card verification. The repeatable launcher and actual public WSS validation are documented in docs/CLOUDFLARE_RELAY.md and docs/HANDOFF.md. Physical two-PC validation remains open. Render configuration remains an optional undeployed alternative. Provider infrastructure limits are separate from the app's no-artificial-file-cap requirement. Neither 1440p60 nor complete product readiness has been established.
 
 Update docs/HANDOFF.md and root HANDOFF.md after meaningful slices and before every push. Preserve existing changes, use codex/ feature branches, coherent commits and draft PRs; never merge automatically. Do not commit reference packages, secret runtime profiles or personal captures.

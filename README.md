@@ -45,6 +45,10 @@ For a hosted test relay with no VPN on either PC, see
 [the free hosted-relay instructions](docs/HOSTED_RELAY.md) and `render.yaml`.
 Configuration is prepared; no public service has been created or deployed.
 
+Current choice: [Cloudflare Quick Tunnel](docs/CLOUDFLARE_RELAY.md), after Render
+required a payment card. Run `npm run relay:cloudflare` on the host PC and share
+the printed WSS URL. The hostname is temporary and the host must remain awake.
+
 An operator must run the TLS relay on a reachable host with a valid certificate for its DNS name. Obtain a certificate/private key using your normal trusted certificate workflow, keep the key outside Git, allow the chosen inbound TCP port, and configure:
 
 ```powershell

@@ -8,6 +8,7 @@
   "scripts": {
     "start": "electron .",
     "relay": "node server/relay.js",
+    "relay:cloudflare": "node scripts/cloudflare-relay.mjs",
     "test": "node --test --test-concurrency=1 test/*.test.js",
     "check": "node scripts/check.mjs",
     "build": "node scripts/build.mjs",
