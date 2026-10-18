@@ -1,0 +1,141 @@
+{
+  "success": true,
+  "testOnly": true,
+  "source": "native capture of exact owned animated 2560x1440 test window",
+  "sourcePattern": "120Hz requested animation: continuously scrolling tiled scene, text and moving rectangle",
+  "network": "same host peer WebRTC; authenticated E2EE signalling over local validated TLS relay; no TURN",
+  "hardware": {
+    "platform": "win32",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 7 9800X3D 8-Core Processor           ",
+    "logicalCpus": 16,
+    "memoryBytes": 33190932480
+  },
+  "requested": {
+    "width": 2560,
+    "height": 1440,
+    "fps": 60
+  },
+  "durationSeconds": 64.99881396484375,
+  "duplex": true,
+  "sustained": {
+    "direction": "incoming",
+    "durationSeconds": 61.0004541015625,
+    "frames": 3638,
+    "averageFps": 59.63890029315068,
+    "width": 2560,
+    "height": 1440,
+    "stable1440p": true,
+    "droppedFrames": 0,
+    "freezes": 0,
+    "bitrateBps": 10443788.876379555,
+    "targetMet": false,
+    "target": {
+      "width": 2560,
+      "height": 1440,
+      "nominalFps": 60,
+      "minimumMeasuredFps": 59.9,
+      "requiredSeconds": 60
+    },
+    "reason": "Frame rate, drops or freezes missed the target"
+  },
+  "oppositeDirection": {
+    "receiver": {
+      "timestamp": 1792357112482.483,
+      "kind": "video",
+      "width": 2560,
+      "height": 1440,
+      "fps": 60,
+      "bytes": 88393015,
+      "framesDecoded": 4181,
+      "framesDropped": 0,
+      "totalDecodeTime": 24.250836,
+      "decoder": "libvpx",
+      "powerEfficient": false,
+      "jitterBufferDelay": 133.706834,
+      "jitterBufferEmittedCount": 4181,
+      "freezeCount": 0,
+      "totalFreezesDuration": 0,
+      "jitter": 0.004,
+      "packetsReceived": 81881,
+      "packetsLost": 0,
+      "codec": "video/VP8"
+    },
+    "sender": [
+      {
+        "timestamp": 1792357112450.8,
+        "kind": "audio",
+        "bytes": 0,
+        "codec": "audio/opus"
+      },
+      {
+        "timestamp": 1792357112450.8,
+        "kind": "audio",
+        "bytes": 214624,
+        "targetBitrate": 32000,
+        "codec": "audio/opus"
+      },
+      {
+        "timestamp": 1792357112450.8,
+        "kind": "video",
+        "width": 2560,
+        "height": 1440,
+        "fps": 60,
+        "bytes": 88350631,
+        "framesEncoded": 4180,
+        "framesSent": 4180,
+        "totalEncodeTime": 35.129,
+        "encoder": "libvpx",
+        "powerEfficient": false,
+        "targetBitrate": 12000000,
+        "qualityLimitationReason": "none",
+        "qualityLimitationDurations": {
+          "bandwidth": 0,
+          "cpu": 0,
+          "none": 78.869,
+          "other": 0
+        },
+        "codec": "video/VP8"
+      }
+    ],
+    "sustained": {
+      "direction": "incoming",
+      "durationSeconds": 60.183137939453125,
+      "frames": 3586,
+      "averageFps": 59.58479605379954,
+      "width": 2560,
+      "height": 1440,
+      "stable1440p": true,
+      "droppedFrames": 0,
+      "freezes": 0,
+      "bitrateBps": 10725979.636512548,
+      "targetMet": false,
+      "target": {
+        "width": 2560,
+        "height": 1440,
+        "nominalFps": 60,
+        "minimumMeasuredFps": 59.9,
+        "requiredSeconds": 60
+      },
+      "reason": "Frame rate, drops or freezes missed the target"
+    },
+    "networkPath": {
+      "local": "host",
+      "remote": "host",
+      "protocol": "udp"
+    }
+  },
+  "meets1440p60": false,
+  "checks": {
+    "noMicBeforeAcceptance": true,
+    "audioReceived": true,
+    "muteAndUnmute": true,
+    "directData": true,
+    "tracksStopped": true
+  },
+  "limitations": [
+    "Native test-window capture is not arbitrary game/display capture.",
+    "Local host is not two physical computers or an external network.",
+    "No independent security audit or 1440p60 guarantee."
+  ]
+}

@@ -4,13 +4,13 @@ export class PeerSession {
   constructor({sendControl,onState=()=>{},onBulk=()=>{},iceServers=[]}) {
     Object.assign(this,{sendControl,onState,onBulk,iceServers}); this.phase='idle';this.muted=false;this.remoteStream=new MediaStream();
   }
-  state(){return {phase:this.phase,peerId:this.peerId,callId:this.callId,muted:this.muted,sharing:!!this.screenStream,remoteStream:this.remoteStream,stats:this.stats||{},captureSettings:this.captureSettings||null,encodingLimits:this.encodingLimits||null,reportAvailable:!!this.measurements?.length||!!this.lastReport};}
+  state(){return {phase:this.phase,peerId:this.peerId,callId:this.callId,muted:this.muted,sharing:!!this.screenStream,remoteStream:this.remoteStream,stats:this.stats||{},captureSettings:this.captureSettings||null,encodingLimits:this.encodingLimits||null,reportAvailable:!!this.measurements?.length||!!this.lastReport,issue:this.issue||''};}
   report(){return this.measurements?.length?{format:'stillroom-stream-report-v1',createdAt:new Date().toISOString(),incoming:summarizeStream(this.measurements),outgoing:summarizeStream(this.measurements,'outgoing'),samples:structuredClone(this.measurements),limitations:['Client-observed performance, not an independent audit.','No message content, peer identity, keys, SDP, or IP addresses included.']}:this.lastReport||null;}
   emit(){this.onState(this.state());}
   signal(data){return this.sendControl(this.peerId,'rtc',{callId:this.callId,...data});}
   async mic(id){return navigator.mediaDevices.getUserMedia({video:false,audio:{echoCancellation:true,noiseSuppression:true,...(id?{deviceId:{exact:id}}:{})}});}
   setup(peerId,callId,initiator){
-    this.peerId=peerId;this.callId=callId;this.candidates=[];this.answer=null;this.offer=null;this.pendingOffer=null;this.remoteStream=new MediaStream();this.measurements=[];
+    this.peerId=peerId;this.callId=callId;this.candidates=[];this.answer=null;this.offer=null;this.pendingOffer=null;this.remoteStream=new MediaStream();this.measurements=[];this.issue='';
     const pc=this.pc=new RTCPeerConnection({iceServers:this.iceServers});
     // The answerer must use the transceivers created by the remote offer.
     // Pre-creating its own addTransceiver slots can leave senders unassociated
@@ -18,7 +18,7 @@ export class PeerSession {
     if(initiator){this.audio=pc.addTransceiver('audio',{direction:'sendrecv'});this.video=pc.addTransceiver('video',{direction:'sendrecv'});this.system=pc.addTransceiver('audio',{direction:'sendrecv'});}
     pc.onicecandidate=({candidate})=>{if(candidate)this.signal({type:'ice',candidate:candidate.toJSON()}).catch(()=>{});};
     pc.ontrack=({track})=>{this.remoteStream.addTrack(track);this.emit();};
-    pc.onconnectionstatechange=()=>{if(this.pc!==pc)return;if(pc.connectionState==='connected'){clearTimeout(this.disconnectDeadline);clearTimeout(this.deadline);clearInterval(this.retry);this.phase='connected';this.emit();}if(pc.connectionState==='disconnected'){clearTimeout(this.disconnectDeadline);this.disconnectDeadline=setTimeout(()=>{if(this.pc===pc&&pc.connectionState==='disconnected')this.cleanup();},10000);}if(['failed','closed'].includes(pc.connectionState))this.cleanup();};
+    pc.onconnectionstatechange=()=>{if(this.pc!==pc)return;if(pc.connectionState==='connected'){clearTimeout(this.disconnectDeadline);clearTimeout(this.deadline);clearInterval(this.retry);this.phase='connected';this.issue='';this.emit();}if(pc.connectionState==='disconnected'){this.issue='Media connection interrupted. Trying to recover for 10 seconds.';this.emit();clearTimeout(this.disconnectDeadline);this.disconnectDeadline=setTimeout(()=>{if(this.pc===pc&&pc.connectionState==='disconnected'){this.issue='Media connection was lost. Check both networks and start another call.';this.cleanup();}},10000);}if(pc.connectionState==='failed'){this.issue='No working media route. Check both networks and STUN/TURN settings; some networks require a TURN relay.';this.cleanup();}else if(pc.connectionState==='closed')this.cleanup();};
     pc.ondatachannel=({channel})=>this.channel(channel);
     if(initiator)this.channel(pc.createDataChannel('stillroom-files',{ordered:true}));
     this.statsTimer=setInterval(()=>this.measure().catch(()=>{}),1000);
@@ -31,13 +31,17 @@ export class PeerSession {
   async gather(pc){if(pc.iceGatheringState==='complete')return;await new Promise(resolve=>{const timer=setTimeout(done,2500);function done(){clearTimeout(timer);pc.removeEventListener('icegatheringstatechange',changed);resolve();}function changed(){if(pc.iceGatheringState==='complete')done();}pc.addEventListener('icegatheringstatechange',changed);});if(this.pc!==pc)throw Error('Call ended');}
   async call(peerId,{microphoneId}={}){
     if(this.phase!=='idle')throw Error('A call is already active');
-    const stream=await this.mic(microphoneId);
-    if(this.phase!=='idle'){stream.getTracks().forEach(t=>t.stop());throw Error('A call is already active');}
-    this.setup(peerId,crypto.randomUUID(),true);this.localStream=stream;stream.getAudioTracks().forEach(t=>{t.enabled=!this.muted});this.phase='calling';
-    try{await this.audio.sender.replaceTrack(stream.getAudioTracks()[0]);const offer=await this.pc.createOffer();await this.pc.setLocalDescription(offer);await this.gather(this.pc);this.offer={type:'offer',sdp:this.pc.localDescription.toJSON()};await this.signal(this.offer);
+    const preparation=this.preparingCall={};this.phase='preparing';this.issue='';this.emit();let stream;
+    try{stream=await this.mic(microphoneId);}catch(error){if(this.preparingCall===preparation){this.preparingCall=null;this.phase='idle';this.emit();}throw error;}
+    if(this.preparingCall!==preparation||this.phase!=='preparing'){stream.getTracks().forEach(t=>t.stop());throw Error('Call cancelled during microphone selection');}
+    this.preparingCall=null;const id=crypto.randomUUID();
+    try{this.setup(peerId,id,true);}catch(error){stream.getTracks().forEach(t=>t.stop());if(this.callId===id)this.cleanup();throw error;}
+    const pc=this.pc;this.localStream=stream;stream.getAudioTracks().forEach(t=>{t.enabled=!this.muted});this.phase='calling';
+    const current=()=>{if(this.pc!==pc||this.callId!==id)throw Error('Call changed during setup');};
+    try{await this.audio.sender.replaceTrack(stream.getAudioTracks()[0]);current();const offer=await pc.createOffer();current();await pc.setLocalDescription(offer);current();await this.gather(pc);current();this.offer={type:'offer',sdp:pc.localDescription.toJSON()};await this.signal(this.offer);current();
       this.retry=setInterval(()=>{if(this.phase==='calling')this.signal(this.offer).catch(()=>{});},3000);
       this.deadline=setTimeout(()=>this.hangup(),30000);this.emit();
-    }catch(e){this.cleanup();throw e;}
+    }catch(e){stream.getTracks().forEach(t=>t.stop());if(this.pc===pc)this.cleanup();throw e;}
   }
   async accept(){
     if(this.phase!=='ringing')throw Error('No incoming call');const id=this.callId,pc=this.pc;const stream=await this.mic();
@@ -56,10 +60,10 @@ export class PeerSession {
   async hangup(){
     const peer = this.peerId, callId = this.callId;
     // Local consent ends immediately, even when signalling is unavailable.
-    this.cleanup();
+    this.issue='';this.cleanup();
     if(peer)await this.sendControl(peer,'rtc',{callId,type:'end'}).catch(()=>{});
   }
-  cleanup(){if(this.measurements?.length)this.lastReport=this.report();this.measurements=[];clearTimeout(this.disconnectDeadline);clearInterval(this.retry);clearInterval(this.statsTimer);clearTimeout(this.deadline);for(const stream of [this.localStream,this.screenStream,this.remoteStream])stream?.getTracks().forEach(t=>t.stop());const pc=this.pc;this.pc=null;if(pc){pc.onconnectionstatechange=null;pc.close();}this.dc=null;this.localStream=null;this.screenStream=null;this.captureSettings=null;this.encodingLimits=null;this.remoteStream=new MediaStream();this.phase='idle';this.peerId=null;this.callId=null;this.stats={};this.emit();}
+  cleanup(){this.preparingCall=null;if(this.measurements?.length)this.lastReport=this.report();this.measurements=[];clearTimeout(this.disconnectDeadline);clearInterval(this.retry);clearInterval(this.statsTimer);clearTimeout(this.deadline);for(const stream of [this.localStream,this.screenStream,this.remoteStream])stream?.getTracks().forEach(t=>t.stop());const pc=this.pc;this.pc=null;if(pc){pc.onconnectionstatechange=null;pc.close();}this.dc=null;this.localStream=null;this.screenStream=null;this.captureSettings=null;this.encodingLimits=null;this.remoteStream=new MediaStream();this.phase='idle';this.peerId=null;this.callId=null;this.stats={};this.emit();}
   async handleControl({from,namespace,data}){
     if(namespace!=='rtc'||!data||typeof data.callId!=='string'||!/^[a-f0-9-]{36}$/.test(data.callId))return;
     if(data.type==='offer'){

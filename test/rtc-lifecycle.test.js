@@ -20,6 +20,55 @@ function fixture(sendControl = async () => {}) {
   return rtc;
 }
 
+test('cancel during outgoing microphone permission stops the late device without starting a call', async () => {
+  const rtc = fixture(), permission = deferred(), mic = track('audio');let setups = 0;
+  rtc.phase = 'idle'; rtc.mic = () => permission.promise; rtc.setup = () => setups++;
+  const calling = rtc.call('peer'); assert.equal(rtc.phase, 'preparing');
+  await rtc.hangup(); permission.resolve(new Stream([mic]));
+  await assert.rejects(calling, /cancelled/); assert.equal(mic.stopped, true); assert.equal(setups, 0); assert.equal(rtc.phase, 'idle');
+});
+
+test('invalid peer configuration releases microphone if connection construction fails', async () => {
+  const rtc = fixture(), mic = track('audio'); rtc.phase = 'idle'; rtc.mic = async () => new Stream([mic]);
+  rtc.setup = (_peer, id) => { rtc.callId = id; throw Error('Invalid ICE settings'); };
+  await assert.rejects(rtc.call('peer'), /Invalid ICE/);
+  assert.equal(mic.stopped, true); assert.equal(rtc.phase, 'idle');
+});
+
+test('outgoing offer finishing after hangup cannot close or signal the next call', async () => {
+  const rtc = fixture(), offer = deferred(), mic = track('audio'), signals = [];
+  rtc.phase = 'idle'; rtc.mic = async () => new Stream([mic]);
+  const oldPc = { close() {}, createOffer: () => offer.promise };
+  rtc.setup = (peer, id) => { rtc.pc = oldPc; rtc.peerId = peer; rtc.callId = id; };
+  rtc.sendControl = async (...args) => signals.push(args);
+  const calling = rtc.call('first-peer'); await new Promise(resolve => setImmediate(resolve));
+  await rtc.hangup(); const next = fixture(); rtc.pc = next.pc; rtc.peerId = 'next-peer'; rtc.callId = 'next-call'; rtc.phase = 'connected';
+  offer.resolve({ type: 'offer' }); await assert.rejects(calling, /Call changed/);
+  assert.equal(rtc.pc, next.pc); assert.equal(rtc.callId, 'next-call'); assert.equal(mic.stopped, true);
+  assert.equal(signals.length, 1); assert.equal(signals[0][2].type, 'end');
+  rtc.cleanup();
+});
+
+test('media route failure releases capture and retains actionable status until dismissed', async () => {
+  const previous = globalThis.RTCPeerConnection;
+  globalThis.RTCPeerConnection = class {
+    addTransceiver() { return { sender: {} }; }
+    createDataChannel(label) { return { label }; }
+    close() {}
+  };
+  const rtc = new PeerSession({ sendControl: async () => {} });
+  try {
+    rtc.setup('peer', 'call', true); const pc = rtc.pc, mic = track('audio'), video = track('video');
+    rtc.localStream = new Stream([mic]); rtc.screenStream = new Stream([video]);
+    pc.connectionState = 'disconnected'; pc.onconnectionstatechange(); assert.match(rtc.state().issue, /Trying to recover/);
+    pc.connectionState = 'connected'; pc.onconnectionstatechange(); assert.equal(rtc.state().issue, '');
+    pc.connectionState = 'failed'; pc.onconnectionstatechange();
+    assert.equal(rtc.phase, 'idle'); assert.equal(mic.stopped, true); assert.equal(video.stopped, true);
+    assert.match(rtc.state().issue, /TURN/);
+    await rtc.hangup(); assert.equal(rtc.state().issue, '');
+  } finally { rtc.cleanup(); globalThis.RTCPeerConnection = previous; }
+});
+
 test('answerer attaches microphone and later screen to remotely negotiated slots', async () => {
   const rtc = fixture(), mic = track('audio'), attached = [];
   const slots = ['audio', 'video', 'audio'].map((kind, i) => ({ receiver: { track: { kind } }, sender: { async replaceTrack(value) { attached.push([i, value]); } } }));

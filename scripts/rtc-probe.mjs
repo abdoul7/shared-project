@@ -12,13 +12,15 @@ app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 app.commandLine.appendSwitch('disable-renderer-backgrounding');
 app.commandLine.appendSwitch('disable-background-timer-throttling');
 const nativeCapture=process.argv.includes('--native');
+const duplex=process.argv.includes('--duplex'), motion=process.argv.includes('--motion');
+if((duplex||motion)&&!nativeCapture)throw Error('--duplex and --motion require --native');
 const senderIndex=process.argv.includes('--reverse')?1:0, receiverIndex=1-senderIndex;
 if(nativeCapture)app.commandLine.appendSwitch('force-device-scale-factor','1');
 const seconds=Number(process.env.STILLROOM_RTC_SECONDS||30);
 if(!Number.isFinite(seconds)||seconds<10||seconds>600)throw Error('RTC test duration must be between 10 and 600 seconds');
 const warmupSeconds=Number(process.env.STILLROOM_RTC_WARMUP_SECONDS||10);
 if(!Number.isFinite(warmupSeconds)||warmupSeconds<0||warmupSeconds>120)throw Error('Invalid RTC warmup duration');
-const outputPath=`.local/rtc-${nativeCapture?'native':'canvas'}${senderIndex?'-reverse':''}-results.json`;
+const outputPath=`.local/rtc-${nativeCapture?'native':'canvas'}${duplex?'-duplex':senderIndex?'-reverse':''}${motion?'-motion':''}-results.json`;
 const probePath=path.resolve('desktop/rtc-probe.html');const probeURL=pathToFileURL(probePath).href;const windows=[],clients=[];let relay;
 let nativeWindow,captureSource;
 const memory=()=>{let saved;return {load:async()=>structuredClone(saved),save:async x=>{saved=structuredClone(x)}}};
@@ -27,11 +29,15 @@ async function until(fn,label,seconds=20){for(let n=0;n<seconds*10;n++){if(await
 const run=(i,code)=>windows[i].webContents.executeJavaScript(code,true);
 const state=i=>run(i,'window.probe.state()');
 function check(value,message){if(!value)throw Error(message);}
+function sustained(initial,samples){
+ const points=[initial.stats,...samples];let previous=-Infinity;
+ return summarizeStream(points.filter(sample=>{const t=sample.incoming?.find(r=>r.kind==='video')?.timestamp;if(!Number.isFinite(t)||t<=previous)return false;previous=t;return true;}));
+}
 app.whenReady().then(async()=>{
 try{
  session.defaultSession.setPermissionRequestHandler((contents,permission,callback,details)=>callback(windows.some(w=>w.webContents===contents)&&contents.getURL()===probeURL&&((permission==='media'&&(details.mediaTypes||[]).every(x=>x==='audio'))||(nativeCapture&&permission==='display-capture'))));
  session.defaultSession.setPermissionCheckHandler((contents,permission)=>windows.some(w=>w.webContents===contents)&&contents.getURL()===probeURL&&(permission==='media'||(nativeCapture&&permission==='display-capture')));
- session.defaultSession.setDisplayMediaRequestHandler((request,callback)=>callback(nativeCapture&&request.frame===windows[senderIndex]?.webContents.mainFrame&&request.frame.url===probeURL&&captureSource?{video:captureSource}:{}));
+ session.defaultSession.setDisplayMediaRequestHandler((request,callback)=>callback(nativeCapture&&(duplex?windows.some(w=>request.frame===w.webContents.mainFrame):request.frame===windows[senderIndex]?.webContents.mainFrame)&&request.frame.url===probeURL&&captureSource?{video:captureSource}:{}));
  const cert=await readFile('test/fixtures/localhost-cert.pem');relay=await createRelay({cert,key:await readFile('test/fixtures/localhost-key.pem')});
  for(let i=0;i<2;i++)clients.push(await ChatClient.create({url:relay.url,ca:cert,store:memory()}));
  await clients[0].addContact(clients[1].contactCard());await clients[1].addContact(clients[0].contactCard());await Promise.all(clients.map(c=>c.connect()));await delay(200);
@@ -49,11 +55,16 @@ try{
  await run(0,`window.probe.bulk(${JSON.stringify(clients[1].contactCard().id)})`);await until(async()=>(await state(1)).frames===1,'direct file channel');
  if(nativeCapture){
    nativeWindow=new BrowserWindow({width:2560,height:1440,useContentSize:true,frame:false,show:false,focusable:false,title:'Stillroom owned 1440p test source',webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});
-   await nativeWindow.loadFile(path.resolve('desktop/stream-test-source.html'));nativeWindow.showInactive();
+   await nativeWindow.loadFile(path.resolve('desktop/stream-test-source.html'),{query:{motion:motion?'1':'0'}});nativeWindow.showInactive();
    nativeWindow.setFullScreen(true);await until(()=>nativeWindow.isFullScreen(),'owned source fullscreen');
    await until(async()=>{captureSource=(await desktopCapturer.getSources({types:['window'],thumbnailSize:{width:0,height:0}})).find(s=>s.id===nativeWindow.getMediaSourceId());return !!captureSource;},'owned native test source');
  }
- const source=await run(senderIndex,`window.probe.share({native:${nativeCapture}})`);await until(async()=>(await state(receiverIndex)).stats?.incoming?.some(r=>r.kind==='video'&&r.framesDecoded>0),'first decoded video');await delay(warmupSeconds*1000);const initial=await state(receiverIndex);await run(receiverIndex,'window.probe.resetSamples()');await delay(seconds*1000);const final=await state(receiverIndex);const sender=await state(senderIndex);const a=await run(senderIndex,'window.probe.finish()');await until(async()=>(await state(receiverIndex)).phase==='idle','remote hangup');const b=await run(receiverIndex,'window.probe.finish()');
+ const source=await run(senderIndex,`window.probe.share({native:${nativeCapture}})`);
+ if(duplex)await run(receiverIndex,'window.probe.share({native:true})');
+ for(const i of duplex?[0,1]:[receiverIndex])await until(async()=>(await state(i)).stats?.incoming?.some(r=>r.kind==='video'&&r.framesDecoded>0),'first decoded video on client '+i);
+ await delay(warmupSeconds*1000);const initial=await state(receiverIndex),secondInitial=duplex?await state(senderIndex):null;
+ await run(receiverIndex,'window.probe.resetSamples()');if(duplex)await run(senderIndex,'window.probe.resetSamples()');
+ await delay(seconds*1000);const final=await state(receiverIndex);const sender=await state(senderIndex);const a=await run(senderIndex,'window.probe.finish()');await until(async()=>(await state(receiverIndex)).phase==='idle','remote hangup');const b=await run(receiverIndex,'window.probe.finish()');
  check(a.tracksStopped&&b.tracksStopped,'Media tracks did not stop');
  const video=final.stats?.incoming?.find(x=>x.kind==='video');check(video?.framesDecoded>0,'No received video frames');
  const baseline=initial.stats?.incoming?.find(x=>x.kind==='video');const duration=(video.timestamp-baseline.timestamp)/1000;
@@ -61,8 +72,9 @@ try{
  result.sourceProducedFps=sender.sourceFrames/sender.sourceElapsedSeconds;result.mediaSources=sender.stats.sources;result.gpuFeatures=app.getGPUFeatureStatus();result.networkPath=final.stats.path;
  if(nativeCapture){const pattern=await nativeWindow.webContents.executeJavaScript('window.testPatternState()');result.source='native capture of exact owned animated 2560x1440 test window';result.sourceProducedFps=pattern.frames/pattern.elapsedSeconds;result.sourceWindowSize={width:nativeWindow.getContentBounds().width,height:nativeWindow.getContentBounds().height};const display=screen.getDisplayMatching(nativeWindow.getBounds());result.display={size:display.size,scaleFactor:display.scaleFactor,refreshRate:display.displayFrequency};result.limitations[0]='Native test-window capture is not arbitrary game/display capture.';}
  result.receiverFreezesDuringWindow=(video.freezeCount||0)-(baseline.freezeCount||0);result.receiverDroppedDuringWindow=(video.framesDropped||0)-(baseline.framesDropped||0);
- const chronological=[{incoming:[baseline]},...b.samples].filter((sample,i,all)=>{const t=sample.incoming?.find(r=>r.kind==='video')?.timestamp;return t!=null&&(i===0||t>all[i-1].incoming?.find(r=>r.kind==='video')?.timestamp);});
- result.sustained=summarizeStream(chronological);result.meets1440p60=result.sustained.targetMet;result.direction=senderIndex?'second client to first':'first client to second';
+ result.sustained=sustained(initial,b.samples);result.meets1440p60=result.sustained.targetMet;result.direction=senderIndex?'second client to first':'first client to second';
+ result.duplex=duplex;result.sourcePattern=motion?'120Hz requested animation: continuously scrolling tiled scene, text and moving rectangle':'120Hz requested native animation: stable background, text and moving rectangle';
+ if(duplex){result.oppositeDirection={receiver:sender.stats?.incoming?.find(r=>r.kind==='video'),sender:final.stats?.outgoing,sustained:sustained(secondInitial,a.samples),networkPath:sender.stats.path};result.meets1440p60&&=result.oppositeDirection.sustained.targetMet;}
  result.sampledReceiverRates=b.samples.map(s=>s.incoming?.find(r=>r.kind==='video')?.fps).filter(Number.isFinite);
  result.warmupSeconds=warmupSeconds;result.measurementSamples=b.samples.map(s=>s.incoming?.find(r=>r.kind==='video')).filter(Boolean);
  if(process.argv.includes('--require-target')&&!result.meets1440p60)process.exitCode=1;

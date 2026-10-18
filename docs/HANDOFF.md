@@ -6,6 +6,16 @@ Stillroom is an original Windows-first private desktop communication application
 
 ## CURRENT — continuation on 2026-10-18 (America/Toronto)
 
+### Latest source checkpoint — user requested immediate push (2026-10-18)
+
+The user explicitly requested stopping tests and pushing the latest source so their friend can continue. No further tests or rebuild were run after that request. The owned duplex probe had already ended when its process was checked; no matching live probe process remained.
+
+- Pending source now adds cancellable outgoing microphone preparation, release on peer-connection construction failure, guards against late outgoing offers affecting the next call, and visible media interruption/route-failure status. Live statistics display direct versus TURN routing. End call dismisses retained failure status.
+- Added native --duplex --motion probe options: both peers capture the same explicitly owned synthetic scrolling/tiled window, exercising simultaneous encode/decode. This is not independent desktops or two physical PCs.
+- Before the stop request, 11 focused lifecycle tests passed. The full suite and packaged executable were NOT rerun/rebuilt after these latest source edits. The previous ZIP and build receipts correspond to f80d2ad, not this checkpoint; friend should pull the branch and run npm ci / npm start or build locally.
+- The already-finished simultaneous motion probe transported 2560x1440 both directions, but missed the strict >=59.9fps gate: rolling averages 59.638900 and 59.584796fps over about a minute, zero reported drops/freezes, about 10.44/10.73Mbps. This used the preceding lifecycle implementation, before the final cancellable-microphone changes. Receipt: verification/streaming-duplex-motion.json. Do not represent the earlier easier sequential results as proof of simultaneous complex-content 60fps.
+- Next contributor: inspect current rtc lifecycle changes, then validate the current source/build when authorized to resume testing. Real two-PC network/media verification remains absent; friend was unavailable. TURN is not provisioned, and encryption limitations in SECURITY.md remain. Do not mark the 1440p60 goal complete.
+
 ### Streaming build update — 2026-10-18 (America/Toronto)
 
 This section supersedes the older native-capture failure and frame-rate results below. The friend is unavailable now; the user explicitly requested continued improvements and a prepared test build. Two-physical-PC validation remains open. The active 1440p60 goal is not complete.

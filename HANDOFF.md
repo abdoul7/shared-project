@@ -12,6 +12,10 @@ Verified here: 35 regression tests pass (1 opt-in skipped), strict native own-wi
 
 Broad GitHub CLI authorization was blocked by automatic approval review; user declined those permissions and requested local checkpoints. The latest user instruction authorizes pushing the feature branch, but not broad CLI permissions or automatic merges. Ordinary Git fetch did complete; preserve remote main's two starter commits in the portable bundle.
 
+## Latest source checkpoint — 2026-10-18
+
+User requested stopping tests and immediately pushing the latest source for their friend. Latest source adds cancellable call preparation, outgoing-call race guards, actionable media connection status and a simultaneous motion probe. Eleven focused lifecycle tests passed before the stop request. Full regression/package verification was not rerun on these latest edits; the existing ZIP is the previous f80d2ad build. The completed duplex motion probe missed the strict target at 59.6389/59.5848fps, without reported drops/freezes. Read the newest docs/HANDOFF.md entry and verification/streaming-duplex-motion.json. Friend should pull the feature branch and run/build from source. No further testing was performed after the stop request.
+
 ## Historical starter state (superseded)
 
 - Repository: https://github.com/abdoul7/shared-project (private).

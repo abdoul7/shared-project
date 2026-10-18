@@ -15,7 +15,7 @@ export async function mountFeatures({ getSelected, notice }) {
     sendControl: (peer, _namespace, data) => invoke('rtc-send', peer, data),
     onBulk: (peer, frame) => invoke('bulk-received', peer, frame),
     onState: state => {
-      $('callPanel').hidden = state.phase === 'idle';
+      $('callPanel').hidden = state.phase === 'idle' && !state.issue;
       $('callState').textContent = `${state.phase} ${state.peerId ? '· ' + state.peerId.slice(0, 12) : ''}`;
       $('acceptCall').hidden = $('rejectCall').hidden = state.phase !== 'ringing';
       for (const id of ['muteCall', 'shareScreen']) $(id).disabled = state.phase !== 'connected';
@@ -23,6 +23,7 @@ export async function mountFeatures({ getSelected, notice }) {
       $('exportStreamReport').disabled = !state.reportAvailable;
       $('muteCall').textContent = state.muted ? 'Unmute' : 'Mute';
       $('sharingIndicator').textContent = state.sharing ? '● SHARING ACTIVE — selected source is being transmitted. Stop sharing to end capture.' : '';
+      $('callIssue').textContent = state.issue;
       $('callPeer').disabled = !getSelected() || !connected || state.phase !== 'idle';
       const ids = state.remoteStream.getTracks().map(t => t.id).join(',');
       if (ids !== trackIds) {
@@ -42,6 +43,7 @@ export async function mountFeatures({ getSelected, notice }) {
         incoming ? `Receiver: ${incoming.width || '—'}×${incoming.height || '—'} · ${incoming.fps ?? '—'}fps · ${incoming.codec || 'negotiating'} · decoded ${incoming.framesDecoded ?? 0} / dropped ${incoming.framesDropped ?? 0}` : 'Receiver: no video measurements yet.',
         outgoing ? `Sender: ${outgoing.width || '—'}×${outgoing.height || '—'} · ${outgoing.fps ?? '—'}fps · ${outgoing.codec || 'negotiating'} · limitation ${outgoing.qualityLimitationReason || 'unknown'}` : '',
         sustained?.averageFps != null ? `Sustained receiver: ${sustained.averageFps.toFixed(3)}fps over ${sustained.durationSeconds.toFixed(1)}s · ${sustained.droppedFrames} dropped / ${sustained.freezes} freezes. ${sustained.reason}. Target: ≥59.9fps for 60s at 2560×1440.` : '',
+        state.stats.path ? `Media route: ${[state.stats.path.local,state.stats.path.remote].includes('relay') ? 'TURN relay' : 'direct peer'} · ${state.stats.path.protocol || 'unknown transport'}.` : '',
         `Round trip: ${state.stats.rtt == null ? 'unavailable' : Math.round(state.stats.rtt * 1000) + 'ms'}. Media is direct peer encrypted; TURN forwards ciphertext.`,
       ].filter(Boolean).join('\n');
     },
