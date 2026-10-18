@@ -1,0 +1,27 @@
+{
+  "name": "stillroom",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private desktop communication — experimental first slice",
+  "type": "module",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron .",
+    "relay": "node server/relay.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "check": "node scripts/check.mjs",
+    "build": "electron-packager . Stillroom --platform=win32 --arch=x64 --out=dist --overwrite --ignore=^/(docs|test|scripts|server|github-.*|\\.git)(/|$)",
+    "smoke:desktop": "electron . --smoke"
+  },
+  "dependencies": {
+    "libsodium-wrappers": "0.8.4",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "44.9.0"
+  },
+  "engines": {
+    "node": ">=24.15.0"
+  }
+}

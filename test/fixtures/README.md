@@ -1,0 +1,1 @@
+The localhost certificate and private key are public, test-only fixtures. Never use them in a deployment. Integration tests explicitly trust this certificate; the application does not. They were generated with .NET CertificateRequest for localhost and 127.0.0.1, and expire in October 2031.

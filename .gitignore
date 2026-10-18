@@ -1,0 +1,28 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Publicly shared localhost test identity; never deploy its key.
+!test/fixtures/localhost-cert.pem
+!test/fixtures/localhost-key.pem
+
+# Dependencies and build output
+node_modules/
+.venv/
+__pycache__/
+dist/
+build/
+
+# Local system files
+.DS_Store
+Thumbs.db
+*.log
+
+# Local identity profiles, reference evidence with source content, and screenshots
+.local/
+profiles/
+*.partial
+github-*.png
+reference-private/
